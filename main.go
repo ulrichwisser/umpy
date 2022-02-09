@@ -54,24 +54,12 @@ func main() {
 		if rr.Header().Rrtype == dns.TypeSOA {
 			origin = rr.Header().Name
 		}
-		if rr.Header().Name != origin {
-			if rr.Header().Rrtype == dns.TypeNS {
-				continue
-			}
-			if rr.Header().Rrtype == dns.TypeA {
-				continue
-			}
-			if rr.Header().Rrtype == dns.TypeAAAA {
-				continue
-			}
-		}
 		if rr.Header().Rrtype == dns.TypeNSEC {
 			foundNSEC = true
 		}
 		if rr.Header().Rrtype == dns.TypeNSEC3 {
 			foundNSEC3 = true
 		}
-
 		if rr.Header().Rrtype == dns.TypeDNSKEY {
 			keys = append(keys, rr)
 		}
@@ -138,14 +126,14 @@ func main() {
 		nsec3labels := getLabels(nsec3cache)
 		nsec3ChainErrors = checkNSEC3(origin, nsec3cache)
 		// check if NSEC3 RRSIG validate
-		nsec3ChainErrors += checkSignatures(nsec3labels, nsec3cache, keys)
-		nsec3ChainErrors += checkNSEC3Labels(nsec3cache, zonelabels, nsec3param, origin)
+		nsec3ChainErrors += checkSignatures(nsec3labels, nsec3cache, keys, origin)
+		nsec3ChainErrors += checkNSEC3Labels(nsec3cache, zonecache, zonelabels, nsec3param, origin)
 	}
 
 	if verbose {
 		fmt.Println("Start checking RRSIG signatures")
 	}
-	sigErrors = checkSignatures(zonelabels, zonecache, keys)
+	sigErrors = checkSignatures(zonelabels, zonecache, keys, origin)
 
 	// Print results
 	if foundNSEC {
@@ -228,9 +216,12 @@ func checkNSEC3(origin string, nsec3cache Cache) int {
 	return chainErrors
 }
 
-func checkNSEC3Labels(nsec3cache Cache, zonelabels []string, nsec3param *dns.NSEC3PARAM, origin string) int {
+func checkNSEC3Labels(nsec3cache Cache, zonecache Cache, zonelabels []string, nsec3param *dns.NSEC3PARAM, origin string) int {
 	labelerror := 0
 	for _, label := range zonelabels {
+		if _, ok := zonecache[label]["DS"]; !ok && isDelegated(label, zonecache, origin) {
+			continue
+		}
 		nlabel := dns.HashName(label, nsec3param.Hash, nsec3param.Iterations, nsec3param.Salt)
 		if _, ok := nsec3cache[nlabel+"."+origin]; !ok {
 			if verbose {
@@ -242,13 +233,33 @@ func checkNSEC3Labels(nsec3cache Cache, zonelabels []string, nsec3param *dns.NSE
 	return labelerror
 }
 
-func checkSignatures(labels []string, cache Cache, keys []dns.RR) int {
+func checkSignatures(labels []string, cache Cache, keys []dns.RR, origin string) int {
 	sigErrors := 0
 	now := uint32(time.Now().Unix())
 	for _, label := range labels {
 		for rrtype := range cache[label] {
 			if strings.HasPrefix(rrtype, "RRSIG") {
 				continue
+			}
+
+			if rrtype == "NS" && label != origin {
+				// delegation is not signed
+				continue
+			}
+
+			if isDelegated(label, cache, origin) {
+				// label is delegated, no signatures should exist, except DS and NSEC
+				if rrtype != "DS" && rrtype != "NSEC" && rrtype != "NSEC3" {
+					if _, ok := cache[label]["RRSIG"+rrtype]; ok {
+						if verbose {
+							fmt.Printf("Label %s is delegated, but RR type %s is signed", label, rrtype)
+						}
+						sigErrors += 1
+						continue
+					}
+					// this is good, no signature exists, so nothing to do
+					continue
+				}
 			}
 
 			// check existence of signatures
@@ -293,6 +304,36 @@ func checkSignatures(labels []string, cache Cache, keys []dns.RR) int {
 
 	}
 	return sigErrors
+}
+
+func isDelegated(label string, cache Cache, origin string) bool {
+	// out of zone, has to be glue
+	if !strings.HasSuffix(label, origin) {
+		return true
+	}
+
+	// origin is not delegated
+	if label == origin {
+		return false
+	}
+
+	num_origin := dns.CountLabel(origin)
+	num_label := dns.CountLabel(label)
+	labels := dns.SplitDomainName(label)
+
+	for i := 0; i < num_label-num_origin; i += 1 {
+		l := dns.Fqdn(strings.Join(labels[i:num_label], "."))
+		if _, ok := cache[l]; ok {
+			if _, ok = cache[l]["NS"]; ok {
+				//fmt.Printf("%s is delegated to %s\n", label, l)
+				return true
+			}
+		}
+	}
+
+	// label is not in cache
+	//fmt.Printf("%s is not delegated\n", label)
+	return false
 }
 
 func checkRRSIG(keys []dns.RR, rrset []dns.RR, rrsigs []dns.RR) bool {

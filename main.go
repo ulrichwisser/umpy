@@ -11,18 +11,25 @@ import (
 	"github.com/miekg/dns"
 )
 
-const MAXAGE = 20 * 24 * 60 * 60
-const MINVALID = 1 * 24 * 60 * 60
+const DEFAULT_MAXAGE = 4 * 24 * 60 * 60
+const DEFAULT_MINVALID = 10 * 24 * 60 * 60
+const DEFAULT_MAXVALID = 20 * 24 * 60 * 60
 
 type Cache map[string]map[string][]dns.RR
 
 var verbose bool = false
+var maxage uint = DEFAULT_MAXAGE
+var minvalid uint = DEFAULT_MINVALID
+var maxvalid uint = DEFAULT_MAXVALID
 
 func main() {
 
 	// define and parse command line arguments
 
 	flag.BoolVar(&verbose, "v", false, "print more information while running")
+	flag.UintVar(&maxage, "m", DEFAULT_MAXAGE, "print more information while running")
+	flag.UintVar(&minvalid, "n", DEFAULT_MINVALID, "print more information while running")
+	flag.UintVar(&maxvalid, "o", DEFAULT_MAXVALID, "print more information while running")
 	flag.Parse()
 
 	if flag.NArg() != 1 {
@@ -275,19 +282,25 @@ func checkSignatures(labels []string, cache Cache, keys []dns.RR, origin string)
 			for _, rr := range cache[label]["RRSIG"+rrtype] {
 				if rr.(*dns.RRSIG).Inception >= now {
 					if verbose {
-						fmt.Printf("Signature for %s %s has a future inception date\n", label, rrtype)
+						fmt.Printf("Signature for %s %s has a future inception date %s\n", label, rrtype, dns.TimeToString(rr.(*dns.RRSIG).Inception))
 					}
 					sigErrors += 1
 				}
-				if rr.(*dns.RRSIG).Inception < now-MAXAGE {
+				if rr.(*dns.RRSIG).Inception < now-uint32(maxage) {
 					if verbose {
-						fmt.Printf("Signature for %s %s is to old. Inception is %d, min allowed %d\n", label, rrtype, rr.(*dns.RRSIG).Inception, now-MAXAGE)
+						fmt.Printf("Signature for %s %s is to old. Inception is %s, min allowed %s\n", label, rrtype, dns.TimeToString(rr.(*dns.RRSIG).Inception), dns.TimeToString(now-uint32(maxage)))
 					}
 					sigErrors += 1
 				}
-				if rr.(*dns.RRSIG).Expiration <= now+MINVALID {
+				if rr.(*dns.RRSIG).Expiration < now+uint32(minvalid) {
 					if verbose {
-						fmt.Printf("Signature for %s %s expires too soon. Expiration is %d, min allowed %d.\n", label, rrtype, rr.(*dns.RRSIG).Expiration, now+MINVALID)
+						fmt.Printf("Signature for %s %s expires too soon. Expiration is %s, min allowed %s.\n", label, rrtype, dns.TimeToString(rr.(*dns.RRSIG).Expiration), dns.TimeToString(now+uint32(minvalid)))
+					}
+					sigErrors += 1
+				}
+				if rr.(*dns.RRSIG).Expiration > now+uint32(maxvalid) {
+					if verbose {
+						fmt.Printf("Signature for %s %s expires too late. Expiration is %s, min allowed %s.\n", label, rrtype, dns.TimeToString(rr.(*dns.RRSIG).Expiration), dns.TimeToString(now+uint32(maxvalid)))
 					}
 					sigErrors += 1
 				}

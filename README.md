@@ -219,9 +219,11 @@ NSEC3 records will be checked against all recommendations in
 https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-nsec3-guidance
 
 For the number of allowed iterations can be configured by
+
 MaxNsec3Iterations (default 10)
 
 Please indicate if optout is ok with the following configuration option
+
 Nsec3OptOutOk  (default false)
 
 ## Authors

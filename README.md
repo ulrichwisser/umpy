@@ -51,7 +51,7 @@ Easiest way to contribute is via pull-request, open an issue or contact the auth
 
 To run tests, run the following command
 
-```bash
+```
   make test
 ```
 
@@ -64,12 +64,14 @@ command line `validnssec --config exempel.conf`.
 
 ### Command Line Arguments
 
---verbose  -v  increase the level of verbosity (1=error,2=warnings,3=info,4=debug)
---nsec         force to run NSEC checks
---nsec3        force to run NSEC3 checks
---norrsig      do nor run RRSIG checks
---now          set timestamp for RRSIG evaluation, format: YYYY-MM-DDTHH:MM:SS+0000
---config   -f  give a location of a config file to read
+|          |    | Description |
+|----------|----|----------------------------------------------------------------------------|
+|--verbose | -v | increase the level of verbosity (1=error,2=warnings,3=info,4=debug)
+|--nsec    |    | force to run NSEC checks
+|--nsec3   |    | force to run NSEC3 checks
+|--norrsig |    | do nor run RRSIG checks
+|--now     |    | set timestamp for RRSIG evaluation, format: YYYY-MM-DDTHH:MM:SS+0000
+|--config  | -f | give a location of a config file to read
 
 ### Which tests will be executed
 
@@ -131,6 +133,7 @@ TODO: check that any other labels do not have a NSEC record
   https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-nsec3-guidance
 
 TODO: check that all needed NSEC3 records are in the zone
+
 TODO: check that all NSEC3 records in the zone are allowed
 
 For configuration see section NSEC3 Configuration
@@ -169,22 +172,24 @@ To allow or forbid a specific algorithm one of the following variables have to b
 The list is from the IANA list of well defined DNSSEC algorithms
 https://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml
 
-RSAMD5               (default false)
-DH                   (default false)
-DSA                  (default false)
-RSASHA1              (default false)
-DSA-NSEC3-SHA1       (default false)
-RSASHA1-NSEC3-SHA1   (default false)
-RSASHA256            (default true)
-RSASHA512            (default true)
-ECC-GOST             (default false)
-ECDSAP256SHA256      (default true)
-ECDSAP384SHA384      (default true)
-ED25519              (default true)
-ED448                (default true)
-INDIRECT             (default false)
-PRIVATEDNS           (default false)
-PRIVATEOID           (default false)
+| Algorithm | Default value |
+|-----------|---------------|
+|RSAMD5              | false
+|DH                  | false
+|DSA                 | false
+|RSASHA1             | false
+|DSA-NSEC3-SHA1      | false
+|RSASHA1-NSEC3-SHA1  | false
+|RSASHA256           | true
+|RSASHA512           | true
+|ECC-GOST            | false
+|ECDSAP256SHA256     | true
+|ECDSAP384SHA384     | true
+|ED25519             | true
+|ED448               | true
+|INDIRECT            | false
+|PRIVATEDNS          | false
+|PRIVATEOID          | false
 
 Any not mentioned algorithm is by default forbidden.
 To allow an algorithm not in the above list, it's number has to be used as follows
@@ -196,11 +201,13 @@ ALGORITHM666 = true
 The list of allowed digest types can be configured. Digest types from the IANA list
 https://www.iana.org/assignments/ds-rr-types/ds-rr-types.xhtml can be configured by name
 
-SHA1     (default false)
-SHA256   (default true)
-GOST94   (default false)
-SHA384   (default true)
-SHA512   (default true)
+| Digest Type | Default value |
+|-------------|---------------|
+|SHA1    | false
+|SHA256  | true
+|GOST94  | false
+|SHA384  | true
+|SHA512  | true
 
 All other digest types can be configured using  the number like
 

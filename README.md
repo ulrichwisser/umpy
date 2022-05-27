@@ -114,9 +114,7 @@ TODO: CDNSKEY
 - checks that keys of the same algorithm do not have the same keyTag (level warning)
 - checks that at least one key of each algorithm in the DNSKEY set has the SEP flag set (level warning)
 - checks  that all DNSKEY records use an allowed algorithm (level warning)
-
-TODO: check that all keys with SEP flag sign the DNSKEY set
-TODO: check that only keys with SEP set sign the DNSKEY set
+- checks that all keys with SEP flag set sign the DNSKEY set
 
 Configuration: see Allowed Algorithms
 

@@ -87,11 +87,24 @@ The command line argument --norrsig can stop the RRSIG tests from being executed
 
 Sorry, not implemented yet
 
+- checks if CDS uses allowed digest type
+- checks if CDS uses allowed algorithm
+- checks if CDS refers to a DNSKEY record in the DNSKEY set
+- checks if the referred DNSKEY signs the DNSKEY set
+
+Configuration: see Allowed Algorithms and Allowed Digest Types
+
 TODO: CDS
 
 ### CDNSKEY
 
 Sorry, not implemented yet
+
+- checks if CDNSKEY uses an allowed algorithm
+- checks that the referred DNSKEY is in the DNSKEY set
+- checks that the referred DNSKEY signs the DNSKEY set
+
+Configuration: see Allowed Algorithms
 
 TODO: CDNSKEY
 

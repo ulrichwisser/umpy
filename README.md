@@ -124,8 +124,7 @@ Configuration: see Allowed Algorithms
 
 - checks that DS uses allowed digest type
 - checks that DS uses allowed algorithm
-
-TODO: check that label is delegated
+- checks that a label with a DS record is delegated
 
 Configuration: see Allowed Algorithms and Allowed Digest Types
 

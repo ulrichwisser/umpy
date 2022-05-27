@@ -131,6 +131,7 @@ func TestCheckSig(t *testing.T) {
 		{nsSet, keySet, nsSigSet, Result{1,0}},
 		{keySet, notRRset, brokenSigSet2, Result{1,0}},
 		{keySet, keySet, keySet, Result{1,0}},
+		{keySet, keySet, nsSigSet, Result{1,0}},
 	}
 
 	for i, c := range cases {

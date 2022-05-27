@@ -124,21 +124,21 @@ func checkRRSIGTiming(rrsig *dns.RRSIG, minage, maxage, minvalid, maxvalid uint3
 func checkSig(keys []dns.RR, rrset []dns.RR, rrsigs []dns.RR) (r Result) {
 
 	// Check parameters
-	if len(keys) == 0 || !dns.IsRRset(keys) || keys[0].Header().Rrtype != dns.TypeDNSKEY {
+	if !dns.IsRRset(keys) || keys[0].Header().Rrtype != dns.TypeDNSKEY {
 		if viper.GetInt("verbose") >= VERBOSE_ERROR {
 			fmt.Printf("First parameter is not a DNSKEY set\n")
 		}
 		r.errors++
 		return
 	}
-	if len(rrset) == 0 || !dns.IsRRset(rrset) {
+	if !dns.IsRRset(rrset) {
 		if viper.GetInt("verbose") >= VERBOSE_ERROR {
 			fmt.Printf("Second parameter is not a RR set\n")
 		}
 		r.errors++
 		return
 	}
-	if len(rrsigs) == 0 || !dns.IsRRset(rrsigs) || rrsigs[0].Header().Rrtype != dns.TypeRRSIG {
+	if !dns.IsRRset(rrsigs) || rrsigs[0].Header().Rrtype != dns.TypeRRSIG {
 		if viper.GetInt("verbose") >= VERBOSE_ERROR {
 			fmt.Printf("Third parameter is not a RRSIG set\n")
 		}

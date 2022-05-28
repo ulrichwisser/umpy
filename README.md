@@ -174,6 +174,11 @@ MaxAge    inception has to be max this duration old (default 4 days)
 MinValid  expiration has to be after this duration (default 21 days)
 MaxValid  expiration has to be before this duration (default 30 days)
 
+### SOA
+
+- checks that SOA expire consistent with RRSIG timings
+
+Please see DNSSEC timings for details.
 
 ### Allowed Algorithms
 
@@ -235,6 +240,61 @@ MaxNsec3Iterations (default 10)
 Please indicate if optout is ok with the following configuration option
 
 Nsec3OptOutOk  (default false)
+
+### DNSSEC timings
+
+To understand DNSSEC timing it easiest to start with the signing procedure.
+When a record gets signed the inception timestamp is usually put a few hours in
+the past. This is done to avoid validation errors for resolvers with badly synced
+time. Signatures than have a validity period, which is used to calculate the
+expiration timestamp. Some signers add jitter to make resigning more evenly distributed.
+
+Usually a signature is not renewed every time the signer runs, but reused as
+long as the data doesn't change. That is of course as long as the signature is
+valid.
+
+For several reasons as caching and disaster recovery signatures are usually
+renewed long before they expire.
+
+Signing Interval is the time between two consequtive runs of the signer.
+
+```
+Incpetion          Signing          Resign                           Expiration
+   |                  |                |                                  |
+   |------------------|----------------|----------------------------------|
+   | Inception Offset | Refresh Period |                                  |
+                      |              Validity Period                      |
+```
+
+Example:
+Inception Offset  1h
+Refresh Period    4d
+Validity Period  14d
+Signing Interval  6h
+
+So a signatures inception date should never be older than 4 days and 1 hour but at least one hour old.
+The expiration date should never be further way than 14 days and never less
+than 10 days (Validity Period - Refresh Period) away.
+
+This would mean the following configuration values
+
+MaxAge : 4d6h    (Inception Offset + Signing Interval)
+MinAge : 1h      (Inception Offset)
+MinValid : 9d18h (Validity Period - Refresh Period - Signing Interval)
+MaxValid : 14d   (Validity Period)
+
+In case of any disaster where the signer can not run or no new zone can be
+distributed the difference of the Validity Period and the Refresh Period
+are the period in which the zone is still fully valid. After this time validity
+will slowly decline and after Validity Period has passed the full zone will be
+invalid.
+
+Secondary servers continue serving a zone even when the primary server is not
+reachable. The expire value in the SOA record defines how long a secondary server
+might continue to serve the zone.
+
+To be sure that secondary servers only serve a fully valid zone, the SOA expire
+value should be shorter then MinValid.
 
 ## Authors
 

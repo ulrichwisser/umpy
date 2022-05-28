@@ -9,14 +9,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-/*
-
-  tests needed
-	- check that all rrsig validate
-	- check that all rr sets that should be signed are signed
-
-*/
-
 func checkRRSIG(cache Cache, origin string) (r Result) {
 	labels := getLabels(cache)
 

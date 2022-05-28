@@ -267,10 +267,12 @@ Incpetion          Signing          Resign                           Expiration
 ```
 
 Example:
-Inception Offset  1h
-Refresh Period    4d
-Validity Period  14d
-Signing Interval  6h
+|                | Value |
+|----------------|-------|
+|Inception Offset|  1h
+|Refresh Period  |  4d
+|Validity Period | 14d
+|Signing Interval|  6h
 
 So a signatures inception date should never be older than 4 days and 1 hour but at least one hour old.
 The expiration date should never be further way than 14 days and never less
@@ -278,10 +280,12 @@ than 10 days (Validity Period - Refresh Period) away.
 
 This would mean the following configuration values
 
-MaxAge : 4d6h    (Inception Offset + Signing Interval)
-MinAge : 1h      (Inception Offset)
-MinValid : 9d18h (Validity Period - Refresh Period - Signing Interval)
-MaxValid : 14d   (Validity Period)
+|         | Value | Description |
+|---------|-------|-------------|
+|MaxAge   | 4d6h  | (Inception Offset + Signing Interval)
+|MinAge   | 1h    | (Inception Offset)
+|MinValid | 9d18h | (Validity Period - Refresh Period - Signing Interval)
+|MaxValid | 14d   | (Validity Period)
 
 In case of any disaster where the signer can not run or no new zone can be
 distributed the difference of the Validity Period and the Refresh Period

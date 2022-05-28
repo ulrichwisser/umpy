@@ -28,7 +28,7 @@ func checkDS(cache Cache, origin string) (r Result) {
 				r.errors += 1
 			}
 		}
-		if _,ok:=cache[label]["NS"]; !ok {
+		if _, ok := cache[label]["NS"]; !ok {
 			if viper.GetInt(VERBOSE) >= VERBOSE_ERROR {
 				fmt.Printf("Label %s has DS record but is not delegated.\n", label)
 			}

@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"testing"
 	"github.com/miekg/dns"
 	"github.com/spf13/viper"
+	"strings"
+	"testing"
 )
 
 const zoneString string = `
@@ -211,8 +211,8 @@ func TestHash2String(t *testing.T) {
 
 func TestAlgorithm2String(t *testing.T) {
 	cases := []struct {
-		Algorithm       uint8
-		Expected string
+		Algorithm uint8
+		Expected  string
 	}{
 		{0, "ALGORITHM0"},
 		{1, "RSAMD5"},

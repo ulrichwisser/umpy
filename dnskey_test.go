@@ -77,11 +77,11 @@ func TestCheckDNSKEY(t *testing.T) {
 		Zone     string
 		Expected Result
 	}{
-		{dnskeyZone0, Result{1,0}},
-		{dnskeyZone1, Result{0,0}},
-		{dnskeyZone2, Result{0,4}},
-		{dnskeyZone3, Result{0,2}},
-		{dnskeyZone4, Result{0,3}},
+		{dnskeyZone0, Result{1, 0}},
+		{dnskeyZone1, Result{0, 0}},
+		{dnskeyZone2, Result{0, 4}},
+		{dnskeyZone3, Result{0, 2}},
+		{dnskeyZone4, Result{0, 3}},
 	}
 
 	for i, c := range cases {
@@ -109,28 +109,28 @@ brokensig.test.	300	IN	A	10.0.0.0
 `
 
 func TestSignsKey(t *testing.T) {
-		myReader := strings.NewReader(signsKeyZone0)
-		origin, cache := readZonefile(myReader)
+	myReader := strings.NewReader(signsKeyZone0)
+	origin, cache := readZonefile(myReader)
 
-		// 2nd parameter not rr set
-		myset := append(cache[origin]["NS"], cache[origin]["SOA"][0])
-		_, err := keySigns(cache[origin]["DNSKEY"][0].(*dns.DNSKEY), myset, cache[origin]["RRSIGDNSKEY"])
-		if err == nil {
-			t.Log("Test case 0: signsKey expected errors, got none")
-			t.Fail()
-		}
+	// 2nd parameter not rr set
+	myset := append(cache[origin]["NS"], cache[origin]["SOA"][0])
+	_, err := keySigns(cache[origin]["DNSKEY"][0].(*dns.DNSKEY), myset, cache[origin]["RRSIGDNSKEY"])
+	if err == nil {
+		t.Log("Test case 0: signsKey expected errors, got none")
+		t.Fail()
+	}
 
-		// 3rd parameter not rr set
-		_, err = keySigns(cache[origin]["DNSKEY"][0].(*dns.DNSKEY), cache[origin]["NS"], cache[origin]["NS"])
-		if err == nil {
-			t.Log("Test case 1: signsKey expected errors, got none")
-			t.Fail()
-		}
+	// 3rd parameter not rr set
+	_, err = keySigns(cache[origin]["DNSKEY"][0].(*dns.DNSKEY), cache[origin]["NS"], cache[origin]["NS"])
+	if err == nil {
+		t.Log("Test case 1: signsKey expected errors, got none")
+		t.Fail()
+	}
 
-		// not type covered
-		_, err = keySigns(cache[origin]["DNSKEY"][0].(*dns.DNSKEY), cache[origin]["NS"],cache[origin]["RRSIGDNSKEY"])
-		if err == nil {
-			t.Log("Test case 2: signsKey expected errors, got none")
-			t.Fail()
-		}
+	// not type covered
+	_, err = keySigns(cache[origin]["DNSKEY"][0].(*dns.DNSKEY), cache[origin]["NS"], cache[origin]["RRSIGDNSKEY"])
+	if err == nil {
+		t.Log("Test case 2: signsKey expected errors, got none")
+		t.Fail()
+	}
 }

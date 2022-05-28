@@ -36,7 +36,7 @@ func checkRRSIG(cache Cache, origin string) (r Result) {
 		now = uint32(time.Now().Unix())
 	}
 
-  // compute timing boundaries
+	// compute timing boundaries
 	minage := now - uint32(viper.GetInt(MINAGE))
 	maxage := now - uint32(viper.GetInt(MAXAGE))
 	minvalid := now + uint32(viper.GetInt(MINVALID))
@@ -156,16 +156,16 @@ func checkSig(keys []dns.RR, rrset []dns.RR, rrsigs []dns.RR) (r Result) {
 	// now check the signature
 	for _, rrsig := range rrsigs {
 		valid := false
-	  for _, key := range keys {
+		for _, key := range keys {
 			err := rrsig.(*dns.RRSIG).Verify(key.(*dns.DNSKEY), rrset)
 			if err == nil {
 				valid = true
 				break
 			}
 		}
-		if (!valid) {
+		if !valid {
 			if viper.GetInt("verbose") >= VERBOSE_ERROR {
-					fmt.Printf("RRSIG for %s %s keyTag %d did not validate\n", rrsig.Header().Name, dns.TypeToString[rrsig.(*dns.RRSIG).TypeCovered], rrsig.(*dns.RRSIG).KeyTag)
+				fmt.Printf("RRSIG for %s %s keyTag %d did not validate\n", rrsig.Header().Name, dns.TypeToString[rrsig.(*dns.RRSIG).TypeCovered], rrsig.(*dns.RRSIG).KeyTag)
 			}
 			r.errors++
 		}

@@ -101,11 +101,11 @@ a.ns.test.	300	IN	RRSIG	NSEC 13 3 300 20220130235959 20220101000000 11082 test. 
 
 func TestCheckNSEC(t *testing.T) {
 	cases := []struct {
-		Zone     string
+		Zone string
 		Result
 	}{
-		{nsecZone0, Result{0,0}},
-		{nsecZone1, Result{3,0}},
+		{nsecZone0, Result{0, 0}},
+		{nsecZone1, Result{3, 0}},
 	}
 
 	viper.Set("verbose", 1)

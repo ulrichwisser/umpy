@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 
 	"github.com/miekg/dns"
 	"github.com/spf13/viper"
@@ -35,10 +35,10 @@ func checkDNSKEY(cache Cache, origin string) (r Result) {
 	var algSEP map[uint8]bool = make(map[uint8]bool)
 	for _, k := range cache[origin]["DNSKEY"] {
 		var key *dns.DNSKEY = k.(*dns.DNSKEY)
-		if _,ok:= algSEP[key.Algorithm]; !ok {
+		if _, ok := algSEP[key.Algorithm]; !ok {
 			algSEP[key.Algorithm] = false
 		}
-		if key.Flags & dns.SEP == dns.SEP {
+		if key.Flags&dns.SEP == dns.SEP {
 			algSEP[key.Algorithm] = true
 		}
 	}
@@ -65,7 +65,7 @@ func checkDNSKEY(cache Cache, origin string) (r Result) {
 	// chack that all keys with SEP flag set sign the DNSKEY set
 	for _, k := range cache[origin]["DNSKEY"] {
 		var key *dns.DNSKEY = k.(*dns.DNSKEY)
-		if key.Flags & dns.SEP != dns.SEP {
+		if key.Flags&dns.SEP != dns.SEP {
 			continue
 		}
 		// SEP is set, key must sign DNSKEY set
@@ -75,7 +75,7 @@ func checkDNSKEY(cache Cache, origin string) (r Result) {
 				fmt.Println(err)
 			}
 			r.errors++
-		} else if !signs{
+		} else if !signs {
 			if viper.GetInt(VERBOSE) >= VERBOSE_WARNING {
 				fmt.Printf("DNSKEY algorithm %s (%d) keyTag %d, has SEP flag set, but doesn ot sign the DNSKEY set.\n", algorithm2string(key.Algorithm), key.Algorithm, key.KeyTag())
 			}

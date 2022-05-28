@@ -65,8 +65,6 @@ func TestDSdefault(t *testing.T) {
 	viper.Reset()
 }
 
-
-
 var dsZoneString string = `
 test00.example.  300 IN DS 12345   1  0
 test00.example.  300 IN DS 12345   0  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A

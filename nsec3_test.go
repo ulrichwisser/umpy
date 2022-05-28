@@ -275,8 +275,8 @@ func TestCheckNSEC3chain(t *testing.T) {
 
 func TestCheckNSEC3labels(t *testing.T) {
 	cases := []struct {
-		Zone             string
-		Expected   Result
+		Zone     string
+		Expected Result
 	}{
 		{nsec3Zone0, Result{0, 0}},
 		{nsec3Zone1, Result{1, 0}},
@@ -290,7 +290,7 @@ func TestCheckNSEC3labels(t *testing.T) {
 		myReader := strings.NewReader(c.Zone)
 		origin, cache := readZonefile(myReader)
 
-		if r := checkNSEC3Labels(cache, origin); r != c.Expected{
+		if r := checkNSEC3Labels(cache, origin); r != c.Expected {
 			t.Logf("Test case %d: checkNSEC3Labels expected %d errors and %d warnings, found %d errors and %d warnings.\n.", i, c.Expected.errors, c.Expected.warnings, r.errors, r.warnings)
 			t.Fail()
 		}

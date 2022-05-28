@@ -145,7 +145,7 @@ func initConfig() {
 		}
 	} else {
 		if viper.GetInt("verbose") >= VERBOSE_DEBUG {
-  		fmt.Println("Using config file:", viper.ConfigFileUsed())
+			fmt.Println("Using config file:", viper.ConfigFileUsed())
 		}
 	}
 
@@ -227,7 +227,7 @@ func run(args []string) {
 			}
 		}
 	}
-	if viper.GetInt("verbose") >= VERBOSE_INFO{
+	if viper.GetInt("verbose") >= VERBOSE_INFO {
 		if viper.GetBool(CHECK_NSEC) {
 			fmt.Println("NSEC records will be checked.")
 		} else {
@@ -254,7 +254,6 @@ func run(args []string) {
 			fmt.Println("NSEC3 records will not be checked.")
 		}
 	}
-
 
 	/******************************************************
 
@@ -299,15 +298,15 @@ func run(args []string) {
 }
 
 func RunTest(name string, cache Cache, origin string, f func(Cache, string) Result) (r Result) {
-		if viper.GetInt("verbose") >= VERBOSE_DEBUG  {
-			fmt.Println("Start test ", name)
-		}
-		r = f(cache, origin)
-		if viper.GetInt("verbose") >= VERBOSE_WARNING {
-			fmt.Printf("Test %s reported %d warnings.\n", name, r.warnings)
-		}
-		if viper.GetInt("verbose") >= VERBOSE_ERROR {
-			fmt.Printf("Test %s reported %d errors.\n", name, r.errors)
-		}
-		return
+	if viper.GetInt("verbose") >= VERBOSE_DEBUG {
+		fmt.Println("Start test ", name)
+	}
+	r = f(cache, origin)
+	if viper.GetInt("verbose") >= VERBOSE_WARNING {
+		fmt.Printf("Test %s reported %d warnings.\n", name, r.warnings)
+	}
+	if viper.GetInt("verbose") >= VERBOSE_ERROR {
+		fmt.Printf("Test %s reported %d errors.\n", name, r.errors)
+	}
+	return
 }

@@ -26,13 +26,13 @@ func TestRrsigTiming(t *testing.T) {
 		Maxvalid uint32
 		Result
 	}{
-		{1641297600, 4 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{0,0}},      // 2022 01 04 12:00:00, 4 hours, 4 days, 21 days, 31 days - OK
-		{1641297600, 4 * 3600, 1 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{1,0}},      // 2022 01 04 12:00:00, 4 hours, 1 days, 21 days, 31 days - Inception before maxage
-		{1641297600, 5 * 24 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{1,0}}, // 2022 01 04 12:00:00, 5 days, 4 days, 21 days, 31 days - Inception after minage
-		{1641297600, 4 * 3600, 4 * 24 * 3600, 30 * 24 * 3600, 31 * 24 * 3600, Result{1,0}},      // 2022 01 04 12:00:00, 4 hours, 4 days, 30 days, 31 days - Expiration before minvalid
-		{1641297600, 4 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 21 * 24 * 3600, Result{1,0}},      // 2022 01 01 12:00:00, 4 hours, 4 days, 21 days, 21 days - Expiration after maxvid
-		{1641384000, 4 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{1,0}},      // 2022 01 05 12:00:00, 4 hours, 4 days, 21 days, 31 days - Inception before maxage
-		{1641006000, 4 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{1,0}},      // 2022 01 01 03:00:00, 4 hours, 4 days, 21 days, 31 days - Inception after minage
+		{1641297600, 4 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{0, 0}},      // 2022 01 04 12:00:00, 4 hours, 4 days, 21 days, 31 days - OK
+		{1641297600, 4 * 3600, 1 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{1, 0}},      // 2022 01 04 12:00:00, 4 hours, 1 days, 21 days, 31 days - Inception before maxage
+		{1641297600, 5 * 24 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{1, 0}}, // 2022 01 04 12:00:00, 5 days, 4 days, 21 days, 31 days - Inception after minage
+		{1641297600, 4 * 3600, 4 * 24 * 3600, 30 * 24 * 3600, 31 * 24 * 3600, Result{1, 0}},      // 2022 01 04 12:00:00, 4 hours, 4 days, 30 days, 31 days - Expiration before minvalid
+		{1641297600, 4 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 21 * 24 * 3600, Result{1, 0}},      // 2022 01 01 12:00:00, 4 hours, 4 days, 21 days, 21 days - Expiration after maxvid
+		{1641384000, 4 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{1, 0}},      // 2022 01 05 12:00:00, 4 hours, 4 days, 21 days, 31 days - Inception before maxage
+		{1641006000, 4 * 3600, 4 * 24 * 3600, 21 * 24 * 3600, 31 * 24 * 3600, Result{1, 0}},      // 2022 01 01 03:00:00, 4 hours, 4 days, 21 days, 31 days - Inception after minage
 	}
 
 	for i, c := range cases {
@@ -116,22 +116,22 @@ func bool2errors(b bool) string {
 
 func TestCheckSig(t *testing.T) {
 	cases := []struct {
-		Keys     []dns.RR
-		Rrset    []dns.RR
-		Rrsigs   []dns.RR
+		Keys   []dns.RR
+		Rrset  []dns.RR
+		Rrsigs []dns.RR
 		Result
 	}{
-		{keySet, keySet, keySigSet, Result{0,0}},
-		{keySet, nsSet, nsSigSet, Result{0,0}},
-		{keySet, brokenSet1, brokenSigSet1a, Result{1,0}},
-		{keySet, brokenSet1, brokenSigSet1b, Result{1,0}},
-		{keySet, brokenSet1, brokenSigSet1c, Result{2,0}},
-		{keySet, brokenSet2a, brokenSigSet2, Result{2,0}},
-		{keySet, brokenSet2b, brokenSigSet2, Result{0,0}},
-		{nsSet, keySet, nsSigSet, Result{1,0}},
-		{keySet, notRRset, brokenSigSet2, Result{1,0}},
-		{keySet, keySet, keySet, Result{1,0}},
-		{keySet, keySet, nsSigSet, Result{1,0}},
+		{keySet, keySet, keySigSet, Result{0, 0}},
+		{keySet, nsSet, nsSigSet, Result{0, 0}},
+		{keySet, brokenSet1, brokenSigSet1a, Result{1, 0}},
+		{keySet, brokenSet1, brokenSigSet1b, Result{1, 0}},
+		{keySet, brokenSet1, brokenSigSet1c, Result{2, 0}},
+		{keySet, brokenSet2a, brokenSigSet2, Result{2, 0}},
+		{keySet, brokenSet2b, brokenSigSet2, Result{0, 0}},
+		{nsSet, keySet, nsSigSet, Result{1, 0}},
+		{keySet, notRRset, brokenSigSet2, Result{1, 0}},
+		{keySet, keySet, keySet, Result{1, 0}},
+		{keySet, keySet, nsSigSet, Result{1, 0}},
 	}
 
 	for i, c := range cases {
@@ -201,7 +201,7 @@ func TestCheckSignatures(t *testing.T) {
 
 	viper.Set(VERBOSE, VERBOSE_DEBUG)
 
-	expected := Result{5,0}
+	expected := Result{5, 0}
 	viper.Set("now", "2022-01-04T12:00:00Z")
 	if r := checkRRSIG(cache, origin); r != expected {
 		t.Logf("checkSignatures expected  %d errors and %d warnings, found %d errors and %d warnings.\n.", expected.errors, expected.warnings, r.errors, r.warnings)
@@ -209,14 +209,14 @@ func TestCheckSignatures(t *testing.T) {
 	}
 
 	viper.Set("now", "2022-21-59T12:00:00Z")
-	expected = Result{1,0}
+	expected = Result{1, 0}
 	if r := checkRRSIG(cache, origin); r != expected {
 		t.Logf("checkSignatures expected  %d errors and %d warnings, found %d errors and %d warnings.\n.", expected.errors, expected.warnings, r.errors, r.warnings)
 		t.Fail()
 	}
 
 	viper.Set("now", nil)
-	expected = Result{39,0}
+	expected = Result{39, 0}
 	if r := checkRRSIG(cache, origin); r != expected {
 		t.Logf("checkSignatures expected  %d errors and %d warnings, found %d errors and %d warnings.\n.", expected.errors, expected.warnings, r.errors, r.warnings)
 		t.Fail()

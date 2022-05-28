@@ -295,7 +295,7 @@ func checkNSEC3Labels(cache Cache, origin string) (r Result) {
 		// delete all temporary nsec3 data
 		i := 0
 		for {
-				if nsec3entities[label][i].temporary {
+			if nsec3entities[label][i].temporary {
 				nsec3entities[label] = append(nsec3entities[label][:i], nsec3entities[label][i+1:]...)
 				if len(nsec3entities[label]) == 0 {
 					break

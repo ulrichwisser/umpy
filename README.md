@@ -132,7 +132,7 @@ The command line argument --nsec can force validnssec to run this test
 
 - check that all NSEC records are chained together in one loop, in correct order
 - checks that all labels that should have a NSEC record really have one
-- checks that all labels that should have a NASEC record have exactly one
+- checks that all labels that should have a NSEC record have exactly one
 
 TODO: check that any other labels do not have a NSEC record
 

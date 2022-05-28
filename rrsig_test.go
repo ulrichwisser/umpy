@@ -221,4 +221,6 @@ func TestCheckSignatures(t *testing.T) {
 		t.Logf("checkSignatures expected  %d errors and %d warnings, found %d errors and %d warnings.\n.", expected.errors, expected.warnings, r.errors, r.warnings)
 		t.Fail()
 	}
+
+	viper.Reset()
 }

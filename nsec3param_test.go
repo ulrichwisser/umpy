@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/spf13/viper"
 )
 
 var paramString0 string = `
@@ -55,7 +58,10 @@ func TestCheckNSEC3PARAM(t *testing.T) {
 		{paramString9, 3, 1},
 	}
 
+	initConfig()
+
 	for i, c := range cases {
+		fmt.Println("TESTCASE", i)
 		myReader := strings.NewReader(c.Zone)
 		_, cache := readZonefile(myReader)
 		if r := checkNSEC3PARAM(cache, "test.example."); r.errors != c.ExpectedErrors || r.warnings != c.ExpectedWarnings {
@@ -63,4 +69,6 @@ func TestCheckNSEC3PARAM(t *testing.T) {
 			t.Fail()
 		}
 	}
+
+	viper.Reset()
 }

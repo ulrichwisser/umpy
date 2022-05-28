@@ -258,7 +258,6 @@ func TestCheckNSEC3chain(t *testing.T) {
 		{nsec3ZoneOptOut1, true, 2, 0},
 	}
 
-	oldOptOutOK := viper.GetBool(NSEC3_OPTOUTOK)
 	viper.Set("verbose", 2)
 	for i, c := range cases {
 		viper.Set(NSEC3_OPTOUTOK, c.OptOutOK)
@@ -269,8 +268,7 @@ func TestCheckNSEC3chain(t *testing.T) {
 			t.Fail()
 		}
 	}
-	viper.Set(NSEC3_OPTOUTOK, oldOptOutOK)
-
+	viper.Reset()
 }
 
 func TestCheckNSEC3labels(t *testing.T) {

@@ -275,9 +275,9 @@ func checkNSEC3Labels(cache Cache, origin string) (r Result) {
 		       possible temporary NSEC3 RRs.
 
 		We do thingsin order of
-		- collission detection
+		- collision detection
 		- delete all temporary nsec3 data
-		- combine should be unneccessary, but we do check
+		- combine should be unnecessary, but we do check
 	*/
 	for label := range nsec3entities {
 		// collision detection
@@ -285,7 +285,7 @@ func checkNSEC3Labels(cache Cache, origin string) (r Result) {
 			for i := 1; i < len(nsec3entities[label]); i++ {
 				if nsec3entities[label][0].originalowner != nsec3entities[label][i].originalowner {
 					if viper.GetInt("verbose") > 0 {
-						fmt.Printf("NSEC3 abel %s has a collission, owners: %s %s", label, nsec3entities[label][0].originalowner, nsec3entities[label][i].originalowner)
+						fmt.Printf("NSEC3 abel %s has a collision, owners: %s %s", label, nsec3entities[label][0].originalowner, nsec3entities[label][i].originalowner)
 					}
 					r.errors++
 				}
@@ -312,7 +312,7 @@ func checkNSEC3Labels(cache Cache, origin string) (r Result) {
 			continue
 		}
 
-		// combine should be unneccessary, but we do check
+		// combine should be unnecessary, but we do check
 		if len(nsec3entities[label]) > 1 {
 			if viper.GetInt("verbose") > 0 {
 				fmt.Printf("Label %s originalowner %s has %d nsec3 rr.\n", label, nsec3entities[label][0].originalowner, len(nsec3entities[label]))

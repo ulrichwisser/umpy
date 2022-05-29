@@ -1,6 +1,5 @@
 ![example workflow](https://github.com/ulrichwisser/validnssec/actions/workflows/push.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ulrichwisser/validnssec)](https://goreportcard.com/report/github.com/ulrichwisser/validnssec)
-
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
 
 ![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)

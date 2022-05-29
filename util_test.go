@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/miekg/dns"
-	"github.com/spf13/viper"
 	"strings"
 	"testing"
+
+	"github.com/miekg/dns"
+	"github.com/spf13/viper"
 )
 
 const zoneString string = `
@@ -284,8 +285,6 @@ func TestOkAlgorithm(t *testing.T) {
 		{"test255.example 300 IN DS 12345 255 2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A", false}, // Reserved
 	}
 
-	initConfig()
-
 	for _, c := range cases {
 		rr, _ := dns.NewRR(c.RR)
 		ds := (rr).(*dns.DS)
@@ -308,7 +307,10 @@ func TestOkAlgorithm(t *testing.T) {
 			t.Fail()
 		}
 	}
+
+	// restore configuration
 	viper.Reset()
+	initConfig()
 }
 
 func TestOkDigestType(t *testing.T) {
@@ -323,8 +325,6 @@ func TestOkDigestType(t *testing.T) {
 		{"test04.example 300 IN DS 12345 1 4 72d7b62976ce06438e9c0bf319013cf801f09ecc84b8d7e9495f27e305c6a9b0563a9b5f4d288405c3008a946df983d6 ", true},
 		{"test05.example 300 IN DS 12345 1 99 123456789abcdef67890123456789abcdef67890123456789abcdef67890123456789abcdef67890123456789abcdef67890123456789abcdef67890123456789abcdef67890123456789abcdef67890", false},
 	}
-
-	initConfig()
 
 	for _, c := range cases {
 		rr, _ := dns.NewRR(c.RR)
@@ -351,5 +351,8 @@ func TestOkDigestType(t *testing.T) {
 			continue
 		}
 	}
+
+	// restore configuration
 	viper.Reset()
+	initConfig()
 }

@@ -197,10 +197,6 @@ func TestCheckSignatures(t *testing.T) {
 	myReader := strings.NewReader(checkRRSIGzone)
 	origin, cache := readZonefile(myReader)
 
-	initConfig()
-
-	viper.Set(VERBOSE, VERBOSE_DEBUG)
-
 	expected := Result{5, 0}
 	viper.Set("now", "2022-01-04T12:00:00Z")
 	if r := checkRRSIG(cache, origin); r != expected {
@@ -222,5 +218,7 @@ func TestCheckSignatures(t *testing.T) {
 		t.Fail()
 	}
 
+	// restore configuration
 	viper.Reset()
+	initConfig()
 }

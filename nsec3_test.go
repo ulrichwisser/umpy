@@ -267,7 +267,10 @@ func TestCheckNSEC3chain(t *testing.T) {
 			t.Fail()
 		}
 	}
+
+	// restore configuration
 	viper.Reset()
+	initConfig()
 }
 
 /*

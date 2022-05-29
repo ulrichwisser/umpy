@@ -62,7 +62,10 @@ func TestDSdefault(t *testing.T) {
 			t.Fail()
 		}
 	}
+
+	// restore configuration
 	viper.Reset()
+	initConfig()
 }
 
 var dsZoneString string = `
@@ -133,5 +136,8 @@ func TestCheckDS(t *testing.T) {
 		t.Logf("Expected 40 errors, got %d errors", dsErrors)
 		t.Fail()
 	}
+
+	// restore configuration
 	viper.Reset()
+	initConfig()
 }

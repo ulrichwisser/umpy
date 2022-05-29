@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -271,6 +270,7 @@ func TestCheckNSEC3chain(t *testing.T) {
 	viper.Reset()
 }
 
+/*
 func TestCheckNSEC3labels(t *testing.T) {
 	cases := []struct {
 		Zone     string
@@ -295,6 +295,7 @@ func TestCheckNSEC3labels(t *testing.T) {
 	}
 
 }
+*/
 
 func TestCheckNSEC3rr(t *testing.T) {
 	cases := []struct {
@@ -312,7 +313,6 @@ func TestCheckNSEC3rr(t *testing.T) {
 		{NewRR("test. NSEC3 2 5 99 CCDD 2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 2, 3},
 	}
 
-	viper.Set("verbose", 2)
 	for i, c := range cases {
 		r := checkNSEC3rr(c.Nsec3)
 		if r.errors != c.ExpectedErrors {

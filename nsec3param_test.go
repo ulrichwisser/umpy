@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -61,7 +60,6 @@ func TestCheckNSEC3PARAM(t *testing.T) {
 	initConfig()
 
 	for i, c := range cases {
-		fmt.Println("TESTCASE", i)
 		myReader := strings.NewReader(c.Zone)
 		_, cache := readZonefile(myReader)
 		if r := checkNSEC3PARAM(cache, "test.example."); r.errors != c.ExpectedErrors || r.warnings != c.ExpectedWarnings {

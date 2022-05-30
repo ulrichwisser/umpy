@@ -1,4 +1,4 @@
-module github.com/ulrichwisser/validnssec
+module github.com/ulrichwisser/umpy
 
 go 1.16
 

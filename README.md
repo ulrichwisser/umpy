@@ -2,9 +2,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/ulrichwisser/validnssec)](https://goreportcard.com/report/github.com/ulrichwisser/validnssec)
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
 
-![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)
-
-Validate DNSSEC records in a zonefile
+VALIDNSSEC - Validate DNSSEC records in a zonefile
 
 
 # STATUS
@@ -21,6 +19,26 @@ Currently many parts are under construction.
 5. Validates all signatures
 6. DS records are checked for well defined values
 7. NSEC3PARAM and NSEC3 records parameters are checked to follow https://datatracker.ietf.org/doc/draft-ietf-dnsop-nsec3-guidance/
+
+# Benchmarks
+
+Test 1: Average of 100 runs over a .se zonefile.
+
+Test 2: 100 runs over all test zone from jdnssec-tools
+
+| Software | Test 1 | Test 2 |
+|----------|--------|--------|
+|Validnssec ||
+|ldns-verify ||
+|dnssec-verify ||
+|jdnssec-verify ||
+|kzonecheck ||
+
+# Feature Comparison
+
+| Feature | Validnssec | ldns-verify | dnssec-verify | jdnssec-verify | kzonecheck |
+|---------|------------|-------------|---------------|----------------|------------|
+
 
 # Build
 

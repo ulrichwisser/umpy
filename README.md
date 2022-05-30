@@ -1,8 +1,8 @@
-![example workflow](https://github.com/ulrichwisser/validnssec/actions/workflows/push.yml/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ulrichwisser/validnssec)](https://goreportcard.com/report/github.com/ulrichwisser/validnssec)
+![example workflow](https://github.com/ulrichwisser/umpy/actions/workflows/push.yml/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ulrichwisser/umpy)](https://goreportcard.com/report/github.com/ulrichwisser/umpy)
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
 
-VALIDNSSEC - Validate DNSSEC records in a zonefile
+UMPY - The DNSSEC referee
 
 
 # STATUS
@@ -28,7 +28,7 @@ Test 2: 100 runs over all test zone from jdnssec-tools
 
 | Software | Test 1 | Test 2 |
 |----------|--------|--------|
-|Validnssec ||
+|umpy ||
 |ldns-verify ||
 |dnssec-verify ||
 |jdnssec-verify ||
@@ -36,7 +36,7 @@ Test 2: 100 runs over all test zone from jdnssec-tools
 
 # Feature Comparison
 
-| Feature | Validnssec | ldns-verify | dnssec-verify | jdnssec-verify | kzonecheck |
+| Feature | umpy | ldns-verify | dnssec-verify | jdnssec-verify | kzonecheck |
 |---------|------------|-------------|---------------|----------------|------------|
 
 
@@ -46,7 +46,7 @@ Test 2: 100 runs over all test zone from jdnssec-tools
 You will need a zone file. If you do not have one at hand, there are several ccTLDs that allow you to download theirs.
 ```
 dig @zonedata.iis.se se axfr +onesoa > se.zone
-validnssec -v se.zone
+umpy -v se.zone
 ```
 # The details
 
@@ -77,10 +77,10 @@ To run tests, run the following command
 
 ## Configuration
 
-Validnssec can be configured to only run some of the tests and many tests can be
+umpy can be configured to only run some of the tests and many tests can be
 configured. All configuration is done in a config file in YAML format.
-By default `~/.validnssec` is loaded followed by `./.validnssec.` But it can be specified on the
-command line `validnssec --config exempel.conf`.
+By default `~/.umpy` is loaded followed by `./.umpy.` But it can be specified on the
+command line `umpy --config exempel.conf`.
 
 ### Command Line Arguments
 
@@ -148,7 +148,7 @@ Configuration: see Allowed Algorithms and Allowed Digest Types
 
 ### NSEC
 
-The command line argument --nsec can force validnssec to run this test
+The command line argument --nsec can force umpy to run this test
 
 - check that all NSEC records are chained together in one loop, in correct order
 - checks that all labels that should have a NSEC record really have one

@@ -42,10 +42,10 @@ type Cache map[string]map[string][]dns.RR
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:                   "validnssec [-v] [--nsec] [--nsec3] [--norrsig] [-f <config file>] [--now <timestamp>] [<zone file name>]",
+	Use:                   "umpy [-v] [--nsec] [--nsec3] [--norrsig] [-f <config file>] [--now <timestamp>] [<zone file name>]",
 	Version:               "0.0.1a",
 	Short:                 "Validate DNSSEC information in a zone file",
-	Long:                  `validnssec validates DNSSEC information in a zone file.`,
+	Long:                  `umpy validates DNSSEC information in a zone file.`,
 	Run:                   func(cmd *cobra.Command, args []string) { run(args) },
 	DisableFlagsInUseLine: true,
 	Args:                  cobra.MaximumNArgs(1),
@@ -69,7 +69,7 @@ func init() {
 	rootCmd.Flags().Bool("nsec3", true, "validate nsec3 chain")
 	rootCmd.Flags().Bool("norrsig", false, "disable rrsig validation")
 	rootCmd.Flags().String("now", "", "reference time for signature validation")
-	rootCmd.Flags().StringP("config", "f", "", "config file (default is $HOME/.validnssec)")
+	rootCmd.Flags().StringP("config", "f", "", "config file (default is $HOME/.umpy)")
 
 	// Use flags for viper values
 	viper.BindPFlags(rootCmd.Flags())
@@ -121,8 +121,8 @@ func initConfig() {
 	viper.SetDefault(NSEC3_MAXITERATIONS, DEFAULT_NSEC3_MAXITERATIONS)
 	viper.SetDefault(NSEC3_OPTOUTOK, DEFAULT_NSEC3_OPTOUTOK)
 
-	// Search config in home directory with name ".validnssec" (without extension).
-	viper.SetConfigName(".validnssec")
+	// Search config in home directory with name ".umpy" (without extension).
+	viper.SetConfigName(".umpy")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(home)
 	viper.AddConfigPath(".")
@@ -134,7 +134,7 @@ func initConfig() {
 	}
 
 	// read in environment variables that match
-	viper.SetEnvPrefix("VALIDNSSEC")
+	viper.SetEnvPrefix("UMPY")
 	viper.AutomaticEnv()
 
 	// If a config file is found, read it in.

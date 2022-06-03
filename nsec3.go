@@ -347,13 +347,13 @@ func getUniqueOriginalOwnerName(cache Cache, origin string) (uniqueOriginalOwner
 	uniqueOriginalOwnerName = make([]string, 0)
 
 	for label := range cache {
+		// out of zone data should have no nsec records
+		if !strings.HasSuffix(label, origin) {
+			continue
+		}
 		// origin must have nsec records
 		if label == origin {
 			uniqueOriginalOwnerName = append(uniqueOriginalOwnerName, label)
-			continue
-		}
-		// out of zone data should have no nsec records
-		if !strings.HasSuffix(label, origin) {
 			continue
 		}
 		/*

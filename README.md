@@ -1,8 +1,12 @@
 ![example workflow](https://github.com/ulrichwisser/umpy/actions/workflows/push.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ulrichwisser/umpy)](https://goreportcard.com/report/github.com/ulrichwisser/umpy)
-[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
+[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+[![Creative Commons BYNC-ND 4.0](https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png)](http://creativecommons.org/licenses/by-nc-nd/4.0/)
 
-UMPY - The DNSSEC referee
+![UMPY - The DNSSEC referee](https://raw.githubusercontent.com/ulrichwisser/umpy/main/images.umpy.png)
+
+
+# UMPY - The DNSSEC referee
 
 
 # STATUS
@@ -19,6 +23,21 @@ Currently many parts are under construction.
 5. Validates all signatures
 6. DS records are checked for well defined values
 7. NSEC3PARAM and NSEC3 records parameters are checked to follow https://datatracker.ietf.org/doc/draft-ietf-dnsop-nsec3-guidance/
+
+# Copyright
+
+All code is licensed under [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html).
+Artwork is licensed under [![Creative Commons BYNC-ND 4.0](https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png)](http://creativecommons.org/licenses/by-nc-nd/4.0/)
+
+
+# Contributing
+
+Contributions are always welcome!
+
+Please note that all submission must be licensed under [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+Easiest way to contribute is via pull-request, open an issue or contact the author.
+
 
 # Benchmarks
 
@@ -48,9 +67,7 @@ You will need a zone file. If you do not have one at hand, there are several ccT
 dig @zonedata.iis.se se axfr +onesoa > se.zone
 umpy -v se.zone
 ```
-# The details
-
-## Acknowledgements
+# Acknowledgements
 
 Ideas and inspiration from
 
@@ -58,14 +75,6 @@ Ideas and inspiration from
 - ldns-verify https://nlnetlabs.nl/projects/ldns/about/
 - dnssec-verify (part of the bind distribution) https://www.isc.org/bind/
 - jdnssec-tools https://github.com/dblacka/jdnssec-tools
-
-## Contributing
-
-Contributions are always welcome!
-
-Please note that all submission must be licensed under [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/).
-
-Easiest way to contribute is via pull-request, open an issue or contact the author.
 
 ## Running Tests
 
@@ -105,16 +114,17 @@ The command line argument --norrsig can stop the RRSIG tests from being executed
 
 ### CDS
 
-Sorry, not implemented yet
-
 - checks if CDS uses allowed digest type
 - checks if CDS uses allowed algorithm
 - checks if CDS refers to a DNSKEY record in the DNSKEY set
 - checks if the referred DNSKEY signs the DNSKEY set
+- checks that CDS records are only found at the apex
+- checks that all or no CDS records use algorithm 0
+- checks if algorithm 0 is used all other fields should follow RFC 8078 section 4 (see errata)
+- disable DNSKEY checks if algorithm 0 is used
+- checks that CDS RR set is signed by KSK (DNSKEY with SEP flag set)
 
 Configuration: see Allowed Algorithms and Allowed Digest Types
-
-TODO: CDS
 
 ### CDNSKEY
 
@@ -127,6 +137,10 @@ Sorry, not implemented yet
 Configuration: see Allowed Algorithms
 
 TODO: CDNSKEY
+
+### CDS/CDNSKEY
+
+TODO: - checks that CDS and CDNSKEY point to the same keys or both use algorithm zero
 
 ### DNSKEY
 
@@ -319,6 +333,9 @@ might continue to serve the zone.
 
 To be sure that secondary servers only serve a fully valid zone, the SOA expire
 value should be shorter then MinValid.
+
+### Multi Signer DNSSEC
+
 
 ## Authors
 

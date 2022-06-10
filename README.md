@@ -3,7 +3,7 @@
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 [![Creative Commons BYNC-ND 4.0](https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png)](http://creativecommons.org/licenses/by-nc-nd/4.0/)
 
-![UMPY - The DNSSEC referee](https://raw.githubusercontent.com/ulrichwisser/umpy/main/images.umpy.png)
+![UMPY - The DNSSEC referee](https://raw.githubusercontent.com/ulrichwisser/umpy/main/images/umpy.png)
 
 
 # UMPY - The DNSSEC referee

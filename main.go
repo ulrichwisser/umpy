@@ -38,6 +38,9 @@ const VERBOSE_WARNING int = 2
 const VERBOSE_INFO int = 3
 const VERBOSE_DEBUG int = 4
 
+const MULTISIGNER = "MultiSigner"
+const DEFAULT_MULTISIGNER bool = false
+
 type Cache map[string]map[string][]dns.RR
 
 // rootCmd represents the base command when called without any subcommands
@@ -120,6 +123,9 @@ func initConfig() {
 	// Default values for NSEC3 checks
 	viper.SetDefault(NSEC3_MAXITERATIONS, DEFAULT_NSEC3_MAXITERATIONS)
 	viper.SetDefault(NSEC3_OPTOUTOK, DEFAULT_NSEC3_OPTOUTOK)
+
+	// Multisigner
+	viper.SetDefault(MULTISIGNER, DEFAULT_MULTISIGNER)
 
 	// Search config in home directory with name ".umpy" (without extension).
 	viper.SetConfigName(".umpy")

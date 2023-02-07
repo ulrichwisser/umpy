@@ -14,15 +14,18 @@
 This project is a work in progress!
 Currently many parts are under construction.
 
-## Features
+## Main Features
 
+Umpy checks 
+
+1. Validates all signatures
 1. NSEC chain is complete
-2. NSEC3 chain is complete
-3. All labels have an NSEC3 hash
-4. Age check for all RRSIG
-5. Validates all signatures
-6. DS records are checked for well defined values
-7. NSEC3PARAM and NSEC3 records parameters are checked to follow https://datatracker.ietf.org/doc/draft-ietf-dnsop-nsec3-guidance/
+1. Age check for all RRSIG
+1. DS records are checked for well defined values
+1. NSEC3PARAM and NSEC3 records parameters are checked to follow [RFC 9276](https://datatracker.ietf.org/doc/html/rfc9276)
+1. TODO: NSEC3 chain is complete
+
+Please see below for detailed description of all tests performed.
 
 # Copyright
 
@@ -62,11 +65,17 @@ Test 2: 100 runs over all test zone from jdnssec-tools
 # Build
 
 # Test
-You will need a zone file. If you do not have one at hand, there are several ccTLDs that allow you to download theirs.
+
+This software comes with a large amount of unit tests, all of which can be run by
 ```
-dig @zonedata.iis.se se axfr +onesoa > se.zone
-umpy -v se.zone
+go test
 ```
+
+If you'd like to run a specific unit test or a specific group of unit tests use
+```
+go test -run <regexp>
+```
+
 # Acknowledgements
 
 Ideas and inspiration from
@@ -76,20 +85,13 @@ Ideas and inspiration from
 - dnssec-verify (part of the bind distribution) https://www.isc.org/bind/
 - jdnssec-tools https://github.com/dblacka/jdnssec-tools
 
-## Running Tests
-
-To run tests, run the following command
-
-```
-  make test
-```
 
 ## Configuration
 
 umpy can be configured to only run some of the tests and many tests can be
 configured. All configuration is done in a config file in YAML format.
 By default `~/.umpy` is loaded followed by `./.umpy.` But it can be specified on the
-command line `umpy --config exempel.conf`.
+command line `umpy --config  default.conf`.
 
 ### Command Line Arguments
 
@@ -104,35 +106,36 @@ command line `umpy --config exempel.conf`.
 
 ### Which tests will be executed
 
+RRSIG will be check unless --norrsig flag is given as command line parameter
 DS and DNSKEY records will alwys be tested
 NSEC tests are run if NSEC records are found in the zone.
 NSEC3 and NSEC3PARAM tests are run if NSEC3 records are found in the zone.
 
 The command line arguments --nsec and --nsec3 can force the respective tests to be run anyways.
 
-The command line argument --norrsig can stop the RRSIG tests from being executed.
+## Test Specifications
 
 ### CDS
 
-- checks if CDS uses allowed digest type
-- checks if CDS uses allowed algorithm
-- checks if CDS refers to a DNSKEY record in the DNSKEY set
-- checks if the referred DNSKEY signs the DNSKEY set
 - checks that CDS records are only found at the apex
+- checks that CDS RR set is signed by KSK (DNSKEY with SEP flag set)
 - checks that all or no CDS records use algorithm 0
 - checks if algorithm 0 is used all other fields should follow RFC 8078 section 4 (see errata)
-- disable DNSKEY checks if algorithm 0 is used
-- checks that CDS RR set is signed by KSK (DNSKEY with SEP flag set)
+- checks if CDS uses allowed digest type
+- checks if CDS uses allowed algorithm
+- checks if at least one CDS refers to a DNSKEY record in the DNSKEY RR set that signs the DNSKEY RR set
 
 Configuration: see Allowed Algorithms and Allowed Digest Types
 
 ### CDNSKEY
 
-Sorry, not implemented yet
-
-- checks if CDNSKEY uses an allowed algorithm
-- checks that the referred DNSKEY is in the DNSKEY set
-- checks that the referred DNSKEY signs the DNSKEY set
+- checks if CDNSKEY uses allowed algorithm
+- checks if CDNSKEY refers to a DNSKEY record in the DNSKEY set
+- checks if the referred DNSKEY signs the DNSKEY set
+- checks that CDNSKEY records are only found at the apex
+- checks that all or no CDNSKEY records use algorithm 0
+- checks if algorithm 0 is used all other fields should follow RFC 8078 section 4 (see errata)
+- checks that CDNSKEY RR set is signed by KSK (DNSKEY with SEP flag set)
 
 Configuration: see Allowed Algorithms
 
@@ -173,8 +176,8 @@ TODO: check that any other labels do not have a NSEC record
 ### NSEC3
 
 - checks that all NSEC3 records are linked in one loop in the right order
-- checks all NSEC3 records against recommendations in
-  https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-nsec3-guidance
+- checks all NSEC3 records against recommendations in RFC 9276
+  https://datatracker.ietf.org/doc/html/rfc9276
 
 TODO: check that all needed NSEC3 records are in the zone
 
@@ -284,11 +287,8 @@ time. Signatures than have a validity period, which is used to calculate the
 expiration timestamp. Some signers add jitter to make resigning more evenly distributed.
 
 Usually a signature is not renewed every time the signer runs, but reused as
-long as the data doesn't change. That is of course as long as the signature is
-valid.
-
-For several reasons as caching and disaster recovery signatures are usually
-renewed long before they expire.
+long as the data isn't change. For several reasons, for example caching and disaster 
+recovery, signatures are renewed long before they expire. This is the Refresh Period.
 
 Signing Interval is the time between two consequtive runs of the signer.
 
@@ -309,16 +309,16 @@ Example:
 |Signing Interval|  6h
 
 So a signatures inception date should never be older than 4 days and 1 hour but at least one hour old.
-The expiration date should never be further way than 14 days and never less
+The expiration date should never be further away than 14 days and never less
 than 10 days (Validity Period - Refresh Period) away.
 
 This would mean the following configuration values
 
 |         | Value | Description |
 |---------|-------|-------------|
-|MaxAge   | 4d6h  | (Inception Offset + Signing Interval)
+|MaxAge   | 4d1h  | (Inception Offset + Refresh Period)
 |MinAge   | 1h    | (Inception Offset)
-|MinValid | 9d18h | (Validity Period - Refresh Period - Signing Interval)
+|MinValid | 9d18h | (Validity Period - Refresh Period)
 |MaxValid | 14d   | (Validity Period)
 
 In case of any disaster where the signer can not run or no new zone can be

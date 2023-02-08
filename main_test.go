@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/spf13/viper"
 	"os"
 	"testing"
+	"github.com/apex/log"
 )
 
 func TestMain(m *testing.M) {
 	initConfig()
-	viper.Set(VERBOSE, VERBOSE_DEBUG)
+	log.SetLevel(log.DebugLevel)
 	os.Exit(m.Run())
 }

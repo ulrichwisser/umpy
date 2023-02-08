@@ -3,16 +3,15 @@ package main
 import (
 	"errors"
 	"fmt"
-
+	
 	"github.com/miekg/dns"
-	"github.com/spf13/viper"
+
+	"github.com/apex/log"
 )
 
 func checkDNSKEY(cache Cache, origin string) (r Result) {
 	if _, ok := cache[origin]["DNSKEY"]; !ok {
-		if viper.GetInt(VERBOSE) >= VERBOSE_ERROR {
-			fmt.Println("No DNSKEY records at apex of ", origin)
-		}
+		log.Errorf("No DNSKEY records at apex of %s", origin)
 		r.errors++
 		return
 	}
@@ -23,9 +22,7 @@ func checkDNSKEY(cache Cache, origin string) (r Result) {
 		var key *dns.DNSKEY = k.(*dns.DNSKEY)
 		alg_keytag := fmt.Sprintf("%d+%d", key.Algorithm, key.KeyTag())
 		if _, ok := keytags[alg_keytag]; ok {
-			if viper.GetInt(VERBOSE) >= VERBOSE_WARNING {
-				fmt.Printf("DNSKEY RRset contains two keys of algorithm %s (%d) with KeyTag %d\n", algorithm2string(key.Algorithm), key.Algorithm, key.KeyTag())
-			}
+			log.Warnf("DNSKEY RRset contains two keys of algorithm %s (%d) with KeyTag %d\n", algorithm2string(key.Algorithm), key.Algorithm, key.KeyTag())
 			r.warnings++
 		}
 		keytags[alg_keytag] = true
@@ -44,9 +41,7 @@ func checkDNSKEY(cache Cache, origin string) (r Result) {
 	}
 	for alg := range algSEP {
 		if !algSEP[alg] {
-			if viper.GetInt(VERBOSE) >= VERBOSE_WARNING {
-				fmt.Printf("No DNSKEY of algorithm %s (%d) has SEP flag set\n", algorithm2string(alg), alg)
-			}
+			log.Warnf("No DNSKEY of algorithm %s (%d) has SEP flag set\n", algorithm2string(alg), alg)
 			r.warnings++
 		}
 	}
@@ -55,14 +50,12 @@ func checkDNSKEY(cache Cache, origin string) (r Result) {
 	for _, k := range cache[origin]["DNSKEY"] {
 		var key *dns.DNSKEY = k.(*dns.DNSKEY)
 		if !okAlgorithm(key.Algorithm) {
-			if viper.GetInt(VERBOSE) >= VERBOSE_WARNING {
-				fmt.Printf("DNSKEY with algorithm %s (%d) found\n", algorithm2string(key.Algorithm), key.Algorithm)
-			}
+			log.Warnf("DNSKEY with algorithm %s (%d) found\n", algorithm2string(key.Algorithm), key.Algorithm)
 			r.warnings++
 		}
 	}
 
-	// chack that all keys with SEP flag set sign the DNSKEY set
+	// check that all keys with SEP flag set sign the DNSKEY set
 	for _, k := range cache[origin]["DNSKEY"] {
 		var key *dns.DNSKEY = k.(*dns.DNSKEY)
 		if key.Flags&dns.SEP != dns.SEP {
@@ -71,14 +64,10 @@ func checkDNSKEY(cache Cache, origin string) (r Result) {
 		// SEP is set, key must sign DNSKEY set
 		signs, err := keySigns(key, cache[origin]["DNSKEY"], cache[origin]["RRSIGDNSKEY"])
 		if err != nil {
-			if viper.GetInt(VERBOSE) >= VERBOSE_ERROR {
-				fmt.Println(err)
-			}
+			log.Error(err.Error())
 			r.errors++
 		} else if !signs {
-			if viper.GetInt(VERBOSE) >= VERBOSE_WARNING {
-				fmt.Printf("DNSKEY algorithm %s (%d) keyTag %d, has SEP flag set, but doesn ot sign the DNSKEY set.\n", algorithm2string(key.Algorithm), key.Algorithm, key.KeyTag())
-			}
+			log.Warnf("DNSKEY algorithm %s (%d) keyTag %d, has SEP flag set, but doesn ot sign the DNSKEY set.\n", algorithm2string(key.Algorithm), key.Algorithm, key.KeyTag())
 			r.warnings++
 		}
 	}

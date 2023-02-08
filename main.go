@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/miekg/dns"
@@ -10,6 +9,9 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+
+	"github.com/apex/log"
+	"github.com/apex/log/handlers/text"
 )
 
 const MINAGE = "MinAge"
@@ -37,6 +39,7 @@ const VERBOSE_ERROR int = 1
 const VERBOSE_WARNING int = 2
 const VERBOSE_INFO int = 3
 const VERBOSE_DEBUG int = 4
+const VERBOSE_TRACE int = 5
 
 const MULTISIGNER = "MultiSigner"
 const DEFAULT_MULTISIGNER bool = false
@@ -55,11 +58,14 @@ var rootCmd = &cobra.Command{
 }
 
 func main() {
+	// default logging to STDERR
+	log.SetHandler(text.New(os.Stderr))
+
 	// Use flags for viper values
 	viper.BindPFlags(pflag.CommandLine)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		log.Error(err.Error())
 		os.Exit(1)
 	}
 }
@@ -80,10 +86,21 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+
+	// init log level
+	switch viper.GetInt(VERBOSE) {
+		case VERBOSE_QUIET:   	log.SetLevel(log.FatalLevel)
+		case VERBOSE_ERROR:   	log.SetLevel(log.ErrorLevel)
+		case VERBOSE_WARNING: 	log.SetLevel(log.WarnLevel)
+		case VERBOSE_INFO:    	log.SetLevel(log.InfoLevel)
+		case VERBOSE_DEBUG:   	log.SetLevel(log.DebugLevel)
+		default: 				log.SetLevel(log.ErrorLevel)
+	}
+
 	// Find home directory.
 	home, err := homedir.Dir()
 	if err != nil {
-		fmt.Println(err)
+		log.Error(err.Error())
 		os.Exit(1)
 	}
 
@@ -145,14 +162,12 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		if viper.GetString("config") != "" {
-			fmt.Println("Error reading config file.")
-			fmt.Println(err)
+		if len(viper.GetString("config")) > 0 {
+			log.Fatalf("Error reading config file: '%s' %s",viper.GetString("config"), err.Error())
 		}
+		log.Info(err.Error())
 	} else {
-		if viper.GetInt("verbose") >= VERBOSE_DEBUG {
-			fmt.Println("Using config file:", viper.ConfigFileUsed())
-		}
+		log.Debugf("Using config file: %s", viper.ConfigFileUsed())
 	}
 
 	// special handling of dnssec timing data
@@ -161,7 +176,7 @@ func initConfig() {
 		if viper.GetInt(opt) == 0 { // this indicates there is no int value
 			value, parserOk := stringToTTL(viper.GetString(opt))
 			if !parserOk {
-				fmt.Printf("Could not parse config %s value %s\n", opt, viper.GetString(opt))
+				log.Errorf("Could not parse config %s value %s\n", opt, viper.GetString(opt))
 				os.Exit(5)
 			}
 			viper.Set(opt, value)
@@ -170,7 +185,6 @@ func initConfig() {
 }
 
 func run(args []string) {
-
 	//
 	// Take care of command line arguments
 	//
@@ -187,16 +201,14 @@ func run(args []string) {
 	//
 	// ZONE FILE
 	//
-	if viper.GetInt("verbose") >= VERBOSE_DEBUG {
-		fmt.Printf("Start reading zone file\n")
-	}
+	log.Debug("Start reading zone file")
 	var zonef *os.File
 	if len(args) > 0 {
 		var err error
 		zonef, err = os.Open(args[0])
 		if err != nil {
-			fmt.Println("Could not open zonefile ", args[0])
-			fmt.Println(err)
+			log.Errorf("Could not open zonefile %s", args[0])
+			log.Error(err.Error())
 			os.Exit(5)
 		}
 	} else {
@@ -209,15 +221,11 @@ func run(args []string) {
 	if len(args) > 0 {
 		zonef.Close()
 	}
+	log.Debug("Zone file successfully read.")
 
-	if viper.GetInt("verbose") >= VERBOSE_INFO {
-		fmt.Printf("Zone file successfully read.\n")
-	}
 
 	if len(cache) == 0 {
-		if viper.GetInt("verbose") > 0 {
-			fmt.Printf("Zone file empty.\n")
-		}
+		log.Info("Zone file empty.")
 		os.Exit(1)
 	}
 
@@ -225,41 +233,25 @@ func run(args []string) {
 	if !viper.IsSet(CHECK_NSEC) {
 		foundNSEC := hasNSEC(cache)
 		viper.Set(CHECK_NSEC, foundNSEC)
-		if viper.GetInt("verbose") >= VERBOSE_DEBUG {
-			if foundNSEC {
-				fmt.Println("NSEC records found.")
-			} else {
-				fmt.Println("NSEC records not found.")
-			}
-		}
 	}
-	if viper.GetInt("verbose") >= VERBOSE_INFO {
 		if viper.GetBool(CHECK_NSEC) {
-			fmt.Println("NSEC records will be checked.")
+			log.Debug("NSEC records will be checked.")
 		} else {
-			fmt.Println("NSEC records will not be checked.")
+			log.Debug("NSEC records will not be checked.")
 		}
-	}
 
 	// check for NSEC3 chain
 	if !viper.IsSet(CHECK_NSEC3) {
 		foundNSEC3 := hasNSEC3(cache)
 		viper.Set(CHECK_NSEC3, foundNSEC3)
 		if viper.GetInt("verbose") >= VERBOSE_DEBUG {
-			if foundNSEC3 {
-				fmt.Println("NSEC3 records found.")
-			} else {
-				fmt.Println("NSEC3 records not found.")
-			}
 		}
 	}
-	if viper.GetInt("verbose") >= VERBOSE_INFO {
 		if viper.GetBool(CHECK_NSEC3) {
-			fmt.Println("NSEC3 records will be checked.")
+			log.Debug("NSEC3 records will be checked.")
 		} else {
-			fmt.Println("NSEC3 records will not be checked.")
+			log.Debug("NSEC3 records will not be checked.")
 		}
-	}
 
 	/******************************************************
 
@@ -304,15 +296,9 @@ func run(args []string) {
 }
 
 func RunTest(name string, cache Cache, origin string, f func(Cache, string) Result) (r Result) {
-	if viper.GetInt("verbose") >= VERBOSE_DEBUG {
-		fmt.Println("Start test ", name)
-	}
+	defer log.Trace("Runtest").Stop(nil)
+	log.Debugf("Start test %s", name)
 	r = f(cache, origin)
-	if viper.GetInt("verbose") >= VERBOSE_WARNING {
-		fmt.Printf("Test %s reported %d warnings.\n", name, r.warnings)
-	}
-	if viper.GetInt("verbose") >= VERBOSE_ERROR {
-		fmt.Printf("Test %s reported %d errors.\n", name, r.errors)
-	}
+	log.Infof("Test %s reported %d warnings and %d errors.", name, r.warnings, r.errors)
 	return
 }

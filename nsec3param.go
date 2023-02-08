@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// checking for sane NSEC3 parameters https://datatracker.ietf.org/doc/draft-ietf-dnsop-nsec3-guidance/
+// checking for sane NSEC3 parameters RFC9276 https://datatracker.ietf.org/doc/html/rfc9276
 
 func checkNSEC3PARAM(cache Cache, origin string) (r Result) {
 	if _, ok := cache[origin]["NSEC3PARAM"]; !ok {

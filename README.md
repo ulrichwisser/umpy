@@ -129,13 +129,13 @@ Configuration: see Allowed Algorithms and Allowed Digest Types
 
 ### CDNSKEY
 
-- checks if CDNSKEY uses allowed algorithm
-- checks if CDNSKEY refers to a DNSKEY record in the DNSKEY set
-- checks if the referred DNSKEY signs the DNSKEY set
 - checks that CDNSKEY records are only found at the apex
+- checks that CDNSKEY RR set is signed by KSK (DNSKEY with SEP flag set)
+- checks if CDNSKEY refers to a DNSKEY record in the DNSKEY set
+- checks if CDNSKEY uses allowed algorithm
+- checks if the referred DNSKEY signs the DNSKEY set
 - checks that all or no CDNSKEY records use algorithm 0
 - checks if algorithm 0 is used all other fields should follow RFC 8078 section 4 (see errata)
-- checks that CDNSKEY RR set is signed by KSK (DNSKEY with SEP flag set)
 
 Configuration: see Allowed Algorithms
 
@@ -143,7 +143,7 @@ TODO: CDNSKEY
 
 ### CDS/CDNSKEY
 
-TODO: - checks that CDS and CDNSKEY point to the same keys or both use algorithm zero
+- checks that CDS and CDNSKEY point to the same keys or both use algorithm zero
 
 ### DNSKEY
 

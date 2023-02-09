@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/miekg/dns"
 	"github.com/spf13/viper"
 )
@@ -219,4 +220,31 @@ func bool2allow(b bool) string {
 		return "allowed"
 	}
 	return "not allowed"
+}
+
+func checkOnlyAtApex(cache Cache, origin string, rrtype string) (r Result) {
+	for label := range cache {
+		if label == origin {
+			continue
+		}
+		if _, ok := cache[label][rrtype]; ok {
+			log.Errorf("Label %s has %s record.", label, rrtype)
+			r.errors++
+		}
+	}
+	return
+}
+
+func checkSignedBySEP(cache Cache, origin string, rrtype string) (r Result) {
+	for _, rr := range cache[origin]["RRSIG"+rrtype] {
+		rrsig := rr.(*dns.RRSIG)
+		for _, dd := range cache[origin]["DNSKEY"] {
+			dnskey := dd.(*dns.DNSKEY)
+			if rrsig.KeyTag == dnskey.KeyTag() && dnskey.Flags&dns.SEP != dns.SEP {
+				log.Warnf("%s records signed with ZSK keytag %d", rrtype, dnskey.KeyTag())
+				r.warnings++
+			}
+		}
+	}
+	return
 }

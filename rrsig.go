@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
+	"github.com/apex/log"
 	"github.com/miekg/dns"
 	"github.com/spf13/viper"
 )
@@ -17,9 +17,7 @@ func checkRRSIG(cache Cache, origin string) (r Result) {
 	if viper.IsSet("now") {
 		t, err := time.Parse(time.RFC3339, viper.GetString("now"))
 		if err != nil {
-			if viper.GetInt("verbose") > 0 {
-				fmt.Printf("Error decoding timestamp '%s'\n%s\n", viper.GetString("now"), err)
-			}
+			log.Errorf("Error decoding timestamp '%s' %s\n", viper.GetString("now"), err)
 			r.errors = 1
 			return
 		}
@@ -33,13 +31,11 @@ func checkRRSIG(cache Cache, origin string) (r Result) {
 	maxage := now - uint32(viper.GetInt(MAXAGE))
 	minvalid := now + uint32(viper.GetInt(MINVALID))
 	maxvalid := now + uint32(viper.GetInt(MAXVALID))
-	if viper.GetInt("verbose") >= VERBOSE_INFO {
-		fmt.Printf("Reference time NOW      is %s (%d)\n", time.Unix(int64(now), 0).UTC(), now)
-		fmt.Printf("Reference time MINAGE   is %s (%d)\n", time.Unix(int64(minage), 0).UTC(), minage)
-		fmt.Printf("Reference time MAXAGE   is %s (%d)\n", time.Unix(int64(maxage), 0).UTC(), maxage)
-		fmt.Printf("Reference time MINVALID is %s (%d)\n", time.Unix(int64(minvalid), 0).UTC(), minvalid)
-		fmt.Printf("Reference time MAXVALID is %s (%d)\n", time.Unix(int64(maxvalid), 0).UTC(), maxvalid)
-	}
+	log.Infof("Reference time NOW      is %s (%d)", time.Unix(int64(now), 0).UTC(), now)
+	log.Infof("Reference time MINAGE   is %s (%d)", time.Unix(int64(minage), 0).UTC(), minage)
+	log.Infof("Reference time MAXAGE   is %s (%d)", time.Unix(int64(maxage), 0).UTC(), maxage)
+	log.Infof("Reference time MINVALID is %s (%d)", time.Unix(int64(minvalid), 0).UTC(), minvalid)
+	log.Infof("Reference time MAXVALID is %s (%d)", time.Unix(int64(maxvalid), 0).UTC(), maxvalid)
 
 	// start checking all labels
 	for _, label := range labels {
@@ -52,9 +48,7 @@ func checkRRSIG(cache Cache, origin string) (r Result) {
 				// label is delegated, no signatures should exist, except DS and NSEC
 				if rrtype != "DS" && rrtype != "NSEC" && rrtype != "NSEC3" {
 					if _, ok := cache[label]["RRSIG"+rrtype]; ok {
-						if viper.GetInt("verbose") > 0 {
-							fmt.Printf("Label %s is delegated, but RR type %s is signed.\n", label, rrtype)
-						}
+						log.Errorf("Label %s is delegated, but RR type %s is signed.\n", label, rrtype)
 						r.errors++
 						continue
 					}
@@ -65,9 +59,7 @@ func checkRRSIG(cache Cache, origin string) (r Result) {
 
 			// check existence of signatures
 			if _, ok := cache[label]["RRSIG"+rrtype]; !ok || len(cache[label]["RRSIG"+rrtype]) == 0 {
-				if viper.GetInt("verbose") >= VERBOSE_ERROR {
-					fmt.Printf("No signature for label %s rrtype %s\n", label, rrtype)
-				}
+				log.Errorf("No signature for label %s rrtype %s\n", label, rrtype)
 				r.errors++
 				continue
 			}
@@ -87,60 +79,45 @@ func checkRRSIG(cache Cache, origin string) (r Result) {
 
 func checkRRSIGTiming(rrsig *dns.RRSIG, minage, maxage, minvalid, maxvalid uint32) (r Result) {
 	if rrsig.Inception > minage {
-		if viper.GetInt("verbose") > 0 {
-			fmt.Printf("Signature for %s %s is too new. Inception is %s, max allowed %s\n", rrsig.Header().Name, dns.TypeToString[rrsig.TypeCovered], dns.TimeToString(rrsig.Inception), dns.TimeToString(minage))
-		}
+		log.Errorf("Signature for %s %s is too new. Inception is %s, max allowed %s", rrsig.Header().Name, dns.TypeToString[rrsig.TypeCovered], dns.TimeToString(rrsig.Inception), dns.TimeToString(minage))
 		r.errors += 1
 	}
 	if rrsig.Inception < maxage {
-		if viper.GetInt("verbose") > 0 {
-			fmt.Printf("Signature for %s %s is too old. Inception is %s, min allowed %s\n", rrsig.Header().Name, dns.TypeToString[rrsig.TypeCovered], dns.TimeToString(rrsig.Inception), dns.TimeToString(maxage))
-		}
+		log.Errorf("Signature for %s %s is too old. Inception is %s, min allowed %s", rrsig.Header().Name, dns.TypeToString[rrsig.TypeCovered], dns.TimeToString(rrsig.Inception), dns.TimeToString(maxage))
 		r.errors += 1
 	}
 	if rrsig.Expiration < minvalid {
-		if viper.GetInt("verbose") > 0 {
-			fmt.Printf("Signature for %s %s expires too soon. Expiration is %s, min allowed %s.\n", rrsig.Header().Name, dns.TypeToString[rrsig.TypeCovered], dns.TimeToString(rrsig.Expiration), dns.TimeToString(minvalid))
-		}
+		log.Errorf("Signature for %s %s expires too soon. Expiration is %s, min allowed %s.", rrsig.Header().Name, dns.TypeToString[rrsig.TypeCovered], dns.TimeToString(rrsig.Expiration), dns.TimeToString(minvalid))
 		r.errors += 1
 	}
 	if rrsig.Expiration > maxvalid {
-		if viper.GetInt("verbose") > 0 {
-			fmt.Printf("Signature for %s %s expires too late. Expiration is %s, max allowed %s.\n", rrsig.Header().Name, dns.TypeToString[rrsig.TypeCovered], dns.TimeToString(rrsig.Expiration), dns.TimeToString(maxvalid))
-		}
+		log.Errorf("Signature for %s %s expires too late. Expiration is %s, max allowed %s.", rrsig.Header().Name, dns.TypeToString[rrsig.TypeCovered], dns.TimeToString(rrsig.Expiration), dns.TimeToString(maxvalid))
 		r.errors += 1
 	}
 	return
 }
 
 func checkSig(keys []dns.RR, rrset []dns.RR, rrsigs []dns.RR) (r Result) {
+	defer log.Trace("CHECKSIG").Stop(nil)
 
 	// Check parameters
 	if !dns.IsRRset(keys) || keys[0].Header().Rrtype != dns.TypeDNSKEY {
-		if viper.GetInt("verbose") >= VERBOSE_ERROR {
-			fmt.Printf("First parameter is not a DNSKEY set\n")
-		}
+		log.Errorf("First parameter is not a DNSKEY set")
 		r.errors++
 		return
 	}
 	if !dns.IsRRset(rrset) {
-		if viper.GetInt("verbose") >= VERBOSE_ERROR {
-			fmt.Printf("Second parameter is not a RR set\n")
-		}
+		log.Errorf("Second parameter is not a RR set")
 		r.errors++
 		return
 	}
 	if !dns.IsRRset(rrsigs) || rrsigs[0].Header().Rrtype != dns.TypeRRSIG {
-		if viper.GetInt("verbose") >= VERBOSE_ERROR {
-			fmt.Printf("Third parameter is not a RRSIG set\n")
-		}
+		log.Errorf("Third parameter is not a RRSIG set")
 		r.errors++
 		return
 	}
 	if rrsigs[0].(*dns.RRSIG).TypeCovered != rrset[0].Header().Rrtype {
-		if viper.GetInt("verbose") >= VERBOSE_ERROR {
-			fmt.Printf("RRSIG set does not cover RR set.\n")
-		}
+		log.Errorf("RRSIG set does not cover RR set.")
 		r.errors++
 		return
 	}
@@ -156,9 +133,7 @@ func checkSig(keys []dns.RR, rrset []dns.RR, rrsigs []dns.RR) (r Result) {
 			}
 		}
 		if !valid {
-			if viper.GetInt("verbose") >= VERBOSE_ERROR {
-				fmt.Printf("RRSIG for %s %s keyTag %d did not validate\n", rrsig.Header().Name, dns.TypeToString[rrsig.(*dns.RRSIG).TypeCovered], rrsig.(*dns.RRSIG).KeyTag)
-			}
+			log.Errorf("RRSIG for %s %s keyTag %d did not validate", rrsig.Header().Name, dns.TypeToString[rrsig.(*dns.RRSIG).TypeCovered], rrsig.(*dns.RRSIG).KeyTag)
 			r.errors++
 		}
 	}

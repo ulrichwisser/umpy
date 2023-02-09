@@ -71,9 +71,12 @@ func main() {
 }
 
 func init() {
+	// Set default log handler
+	log.SetHandler(text.New(os.Stderr))
+
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.Flags().CountP("verbose", "v", "repeat for more verbose printouts")
+	rootCmd.Flags().CountP(VERBOSE, "v", "repeat for more verbose printouts")
 	rootCmd.Flags().Bool("nsec", true, "validate nsec chain")
 	rootCmd.Flags().Bool("nsec3", true, "validate nsec3 chain")
 	rootCmd.Flags().Bool("norrsig", false, "disable rrsig validation")
@@ -84,8 +87,9 @@ func init() {
 	viper.BindPFlags(rootCmd.Flags())
 }
 
-// initConfig reads in config file and ENV variables if set.
+// initConfig reads in config file and ENV variables if set.sdfsdf					
 func initConfig() {
+
 
 	// init log level
 	switch viper.GetInt(VERBOSE) {
@@ -97,21 +101,10 @@ func initConfig() {
 		default: 				log.SetLevel(log.ErrorLevel)
 	}
 
-	// Find home directory.
-	home, err := homedir.Dir()
-	if err != nil {
-		log.Error(err.Error())
-		os.Exit(1)
-	}
-
 	// Set defaults
 	//
 	// default log loglevel
-	//		1	errors
-	//		2	warnings
-	//		3	info
-	//		4	debug
-	viper.SetDefault("verbose", 0)
+	viper.SetDefault(VERBOSE, VERBOSE_QUIET)
 
 	// Default signature life times
 	viper.SetDefault(MINAGE, DEFAULT_MINAGE)
@@ -143,6 +136,13 @@ func initConfig() {
 
 	// Multisigner
 	viper.SetDefault(MULTISIGNER, DEFAULT_MULTISIGNER)
+
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
 
 	// Search config in home directory with name ".umpy" (without extension).
 	viper.SetConfigName(".umpy")
@@ -263,6 +263,9 @@ func run(args []string) {
 
 	result.Add(RunTest("DNSKEY", cache, origin, checkDNSKEY))
 	result.Add(RunTest("DS", cache, origin, checkDS))
+	result.Add(RunTest("CDS", cache, origin, checkCDS))
+	result.Add(RunTest("CDNSKEY", cache, origin, checkCDS))
+	result.Add(RunTest("SOA", cache, origin, checkCDS))
 
 	// RRSIG
 	if viper.GetBool(CHECK_RRSIG) {

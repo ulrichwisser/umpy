@@ -5,13 +5,14 @@ import (
 	"io"
 	"sort"
 	"strings"
-
+	"time"
 	"github.com/apex/log"
 	"github.com/miekg/dns"
 	"github.com/spf13/viper"
 )
 
 func readZonefile(zonef io.Reader) (origin string, cache Cache) {
+	defer log.Trace("Read Zone File").Stop(nil)
 	cache = make(Cache, 0)
 
 	//
@@ -61,16 +62,6 @@ func hasNSEC3(cache Cache) bool {
 	return false
 }
 
-// Reverse returns its argument string reversed rune-wise left to right.
-func Reverse(s string) []string {
-	labels := dns.SplitDomainName(s)
-	res := make([]string, 0)
-	for i := len(labels) - 1; i >= 0; i = i - 1 {
-		res = append(res, labels[i])
-	}
-	return res
-}
-
 func isDelegated(label string, cache Cache, origin string) bool {
 	// out of zone, has to be glue
 	if !strings.HasSuffix(label, origin) {
@@ -99,37 +90,62 @@ func isDelegated(label string, cache Cache, origin string) bool {
 	return false
 }
 
-func getLabels(cache Cache) []string {
-	var labels []string = make([]string, 0)
-	for label := range cache {
-		labels = append(labels, label)
+// Reverse returns its argument string reversed rune-wise left to right.
+func Reverse(s string) []string {
+	labels := dns.SplitDomainName(s)
+	res := make([]string, 0)
+	for i := len(labels) - 1; i >= 0; i = i - 1 {
+		res = append(res, labels[i])
 	}
+	return res
+}
+
+func getLabels(cache Cache) []string {
+	defer log.Trace("Get Labels").Stop(nil)
+	t0 := time.Now()
+	var labels [][]string = make([][]string, 0)
+	for label := range cache {
+		labels = append(labels, Reverse(label))
+	}
+	log.Debugf("Get labels unsorted %v",time.Since(t0))
+
 	sort.Slice(labels, func(i, j int) bool {
-		li := dns.CountLabel(labels[i])
-		lj := dns.CountLabel(labels[j])
-		ri := Reverse(labels[i])
-		rj := Reverse(labels[j])
+		li := len(labels[i])
+		lj := len(labels[j])
 		min := li
 		if lj < min {
 			min = lj
 		}
 		for n := 0; n < min; n += 1 {
-			if ri[n] == rj[n] {
+			if labels[i][n] == labels[j][n] {
 				continue
 			}
-			return ri[n] < rj[n]
+			return labels[i][n] < labels[j][n]
 		}
 		return li < lj
 	})
-	return labels
+
+	var result []string = make([]string,len(labels))
+	for i:=range labels {
+		rev := make([]string,len(labels[i]))
+		for n,m:= 0,len(labels[i])-1; m>=0; n,m = n+1,m-1 {
+			rev[n]=labels[i][m]
+		}
+		result[i] = strings.Join(rev,".")+"."
+	}
+	log.Debugf("Get labels sorted %v",time.Since(t0))
+
+	return result
 }
 
 func getNsecLabels(cache Cache, origin string) []string {
-	var labels []string = make([]string, 0)
+	defer log.Trace("Get NSEC Labels").Stop(nil)
+	t0 := time.Now()
+	var labels [][]string = make([][]string, 0)
 	for label := range cache {
 		// origin must have nsec records
 		if label == origin {
-			labels = append(labels, label)
+			labels = append(labels, Reverse(label))
 			continue
 		}
 		// out of zone data should have no nsec records
@@ -141,7 +157,7 @@ func getNsecLabels(cache Cache, origin string) []string {
 		*/
 		// if the name is a delegation point it has nsec
 		if _, ok := cache[label]["NS"]; ok {
-			labels = append(labels, label)
+			labels = append(labels, Reverse(label))
 			continue
 		}
 		if !isDelegated(label, cache, origin) {
@@ -159,30 +175,40 @@ func getNsecLabels(cache Cache, origin string) []string {
 					continue
 				}
 			}
-			labels = append(labels, label)
+			labels = append(labels, Reverse(label))
 			continue
 		}
 		// this is glue, no nsec
 	}
+	log.Debugf("Get NSEC labels unsorted %v",time.Since(t0))
 
 	sort.Slice(labels, func(i, j int) bool {
-		li := dns.CountLabel(labels[i])
-		lj := dns.CountLabel(labels[j])
-		ri := Reverse(labels[i])
-		rj := Reverse(labels[j])
+		li := len(labels[i])
+		lj := len(labels[j])
 		min := li
 		if lj < min {
 			min = lj
 		}
 		for n := 0; n < min; n += 1 {
-			if ri[n] == rj[n] {
+			if labels[i][n] == labels[j][n] {
 				continue
 			}
-			return ri[n] < rj[n]
+			return labels[i][n] < labels[j][n]
 		}
 		return li < lj
 	})
-	return labels
+
+	var result []string = make([]string,len(labels))
+	for i:=range labels {
+		rev := make([]string,len(labels[i]))
+		for n,m:= 0,len(labels[i])-1; m>=0; n,m = n+1,m-1 {
+			rev[n]=labels[i][m]
+		}
+		result[i] = strings.Join(rev,".")+"."
+	}
+	log.Debugf("Get NSEC labels sorted %v",time.Since(t0))
+
+	return result
 }
 
 func hash2string(digesttype uint8) string {

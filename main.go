@@ -2,7 +2,8 @@ package main
 
 import (
 	"os"
-
+	"fmt"
+	"sync"
 	"github.com/miekg/dns"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -258,36 +259,50 @@ func run(args []string) {
 	START CHECKING
 
 	******************************************************/
+	var wg sync.WaitGroup
+	results := make(chan Result)
 
-	var result *Result = &Result{}
-
-	result.Add(RunTest("DNSKEY", cache, origin, checkDNSKEY))
-	result.Add(RunTest("DS", cache, origin, checkDS))
-	result.Add(RunTest("CDS", cache, origin, checkCDS))
-	result.Add(RunTest("CDNSKEY", cache, origin, checkCDS))
-	result.Add(RunTest("SOA", cache, origin, checkCDS))
+	go RunTest("DNSKEY", cache, origin, checkDNSKEY, &wg, results)
+	go RunTest("DS", cache, origin, checkDS, &wg, results)
+	go RunTest("CDS", cache, origin, checkCDS, &wg, results)
+	go RunTest("CDNSKEY", cache, origin, checkCDNSKEY, &wg, results)
+	go RunTest("SOA", cache, origin, checkSOA, &wg, results)
+	wg.Add(5)
 
 	// RRSIG
 	if viper.GetBool(CHECK_RRSIG) {
-		result.Add(RunTest("RRSIG", cache, origin, checkRRSIG))
+		go RunTest("RRSIG", cache, origin, checkRRSIG, &wg, results)
+		wg.Add(1)
 	}
 
 	// NSEC
 	if viper.GetBool(CHECK_NSEC) {
-		result.Add(RunTest("NSEC", cache, origin, checkNSEC))
+		go RunTest("NSEC", cache, origin, checkNSEC, &wg, results)
+		wg.Add(1)
 	}
 
 	// NSEC3
 	if viper.GetBool(CHECK_NSEC3) {
-		result.Add(RunTest("NSEC3PARAM", cache, origin, checkNSEC3PARAM))
-		result.Add(RunTest("NSEC3", cache, origin, checkNSEC3))
+		go RunTest("NSEC3PARAM", cache, origin, checkNSEC3PARAM, &wg, results)
+		go RunTest("NSEC3", cache, origin, checkNSEC3, &wg, results)
+		wg.Add(2)
 	}
 
-	/*
+	/* -------------- DONE WITH ALL CHECKS --------------	*/
 
-		DONE WITH ALL CHECKS
+	var result *Result = &Result{}
+	go func() {
+		for r := range results {
+			result.Add(r)
+		}
+		wg.Done()
+	}()
+	wg.Wait()
+	close(results)
+	log.Infof("Total %d erros and %d warnings", result.errors, result.warnings)
 
-	*/
+
+	/* -------------- SET EXIT CODE  --------------	*/
 
 	if result.errors > 0 {
 		os.Exit(5)
@@ -298,10 +313,10 @@ func run(args []string) {
 	os.Exit(0)
 }
 
-func RunTest(name string, cache Cache, origin string, f func(Cache, string) Result) (r Result) {
-	defer log.Trace("Runtest").Stop(nil)
-	log.Debugf("Start test %s", name)
-	r = f(cache, origin)
+func RunTest(name string, cache Cache, origin string, f func(Cache, string) Result, wg *sync.WaitGroup, c chan Result) {
+	defer log.Trace(fmt.Sprintf("Testing %s", name)).Stop(nil)
+	r := f(cache, origin)
 	log.Infof("Test %s reported %d warnings and %d errors.", name, r.warnings, r.errors)
-	return
+	c <- r
+	wg.Done()
 }

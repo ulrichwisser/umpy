@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/apex/log"
-
 	"github.com/miekg/dns"
 )
 
@@ -21,24 +20,8 @@ func checkCDS(cache Cache, origin string) (r Result) {
 	// CDS all have algorithm zero or none
 	r.Add(checkCDSzero(cache, origin))
 
-	// The following tests make no sense if CDS uses algorithm 0
-	if cdsUsesAlgZero(cache, origin) {
-		return
-	}
-
-	for _, rr := range cache[origin]["CDS"] {
-		cds := rr.(*dns.CDS)
-
-		if !okDigestType(cds.DigestType) {
-			log.Errorf("Label %s has CDS record with forbidden digest type %s (%d)", cds.Header().Name, hash2string(cds.DigestType), cds.DigestType)
-			r.errors += 1
-		}
-
-		if !okAlgorithm(cds.Algorithm) {
-			log.Errorf("Label %s has CDS record with forbidden algorithm %s (%d)", cds.Header().Name, algorithm2string(cds.Algorithm), cds.Algorithm)
-			r.errors += 1
-		}
-	}
+	// CDS has allowed algorithm and digest type
+    r.Add(checkCDSparam(cache, origin))
 
 	// checks if at least one CDS refers to a DNSKEY record in the DNSKEY RR set that signs the DNSKEY RR set
 	r.Add(checkCDSsignsDNSKEY(cache, origin))
@@ -66,6 +49,10 @@ func checkCDSsignsDNSKEY(cache Cache, origin string) (r Result) {
 		for _, key := range cache[origin]["DNSKEY"] {
 			if cds.String() == key.(*dns.DNSKEY).ToDS(cds.DigestType).ToCDS().String() {
 				found = true
+				if key.(*dns.DNSKEY).Flags&dns.SEP != dns.SEP {
+					log.Warnf("CDS record with alg=%d and keyTag=%d, refers to DNSKEY that does not have the SEP flag set.", cds.Algorithm, cds.KeyTag)
+					r.warnings++
+				}
 				// now check the signature
 				for _, rrsig := range cache[origin]["RRSIGDNSKEY"] {
 					err := rrsig.(*dns.RRSIG).Verify(key.(*dns.DNSKEY), cache[origin]["DNSKEY"])
@@ -98,6 +85,37 @@ func checkCDSsignsDNSKEY(cache Cache, origin string) (r Result) {
 	return
 }
 
+func checkCDSparam(cache Cache, origin string) (r Result) {
+	for _, rr := range cache[origin]["CDS"] {
+		cds := rr.(*dns.CDS)
+
+		if cds.Algorithm == 0 {
+			if cds.KeyTag != 0 {
+				log.Warnf("CDS records with algorithm 0 should have keyTag set to zero, found %d", cds.KeyTag)
+				r.warnings += 1
+			}
+			if cds.DigestType != 0 {
+				log.Warnf("CDS records with algorithm 0 should have digest type set to zero, found %d", cds.DigestType)
+				r.warnings += 1
+			}
+			if cds.Digest != "00" {
+				log.Warnf("CDS records with algorithm 0 should have digest set to '00', found %s", cds.Digest)
+				r.warnings += 1
+			}
+		} else {
+			if !okDigestType(cds.DigestType) {
+				log.Errorf("Label %s has CDS record with forbidden digest type %s (%d)", cds.Header().Name, hash2string(cds.DigestType), cds.DigestType)
+				r.errors += 1
+			}
+			if !okAlgorithm(cds.Algorithm) {
+				log.Errorf("Label %s has CDS record with forbidden algorithm %s (%d)", cds.Header().Name, algorithm2string(cds.Algorithm), cds.Algorithm)
+				r.errors += 1
+			}
+		}
+	}
+	return
+}
+
 func checkCDSzero(cache Cache, origin string) (r Result) {
 	if _, ok := cache[origin]["CDS"]; !ok {
 		log.Debug("NO CDS records at apex.")
@@ -109,7 +127,6 @@ func checkCDSzero(cache Cache, origin string) (r Result) {
 	for _, rr := range cache[origin]["CDS"] {
 		if rr.(*dns.CDS).Algorithm == 0 {
 			algZero++
-			r.Add(checkCDSdelete(rr.(*dns.CDS)))
 		} else {
 			algNonZero++
 		}
@@ -120,36 +137,4 @@ func checkCDSzero(cache Cache, origin string) (r Result) {
 		r.errors += 1
 	}
 	return
-}
-
-func checkCDSdelete(cds *dns.CDS) (r Result) {
-	if cds == nil {
-		return
-	}
-	if cds.Algorithm != 0 {
-		return
-	}
-
-	if cds.KeyTag != 0 {
-		log.Warnf("CDS records with algorithm 0 should have keyTag set to zero, found %d", cds.KeyTag)
-		r.warnings += 1
-	}
-	if cds.DigestType != 0 {
-		log.Warnf("CDS records with algorithm 0 should have digest type set to zero, found %d", cds.DigestType)
-		r.warnings += 1
-	}
-	if cds.Digest != "00" {
-		log.Warnf("CDS records with algorithm 0 should have digest set to '00', found %s", cds.Digest)
-		r.warnings += 1
-	}
-	return
-}
-
-func cdsUsesAlgZero(cache Cache, origin string) bool {
-	for _, rr := range cache[origin]["CDS"] {
-		if rr.(*dns.CDS).Algorithm == 0 {
-			return true
-		}
-	}
-	return false
 }

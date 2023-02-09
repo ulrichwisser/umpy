@@ -6,57 +6,57 @@ import (
 	"github.com/apex/log"
 )
 
-var cdsZoneString0 string = `
+var cdnskeyZoneString0 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS     0   0  0 00
+test-cds.example.  300 IN CDNSKEY 0 3 0 AA=
 `
-var cdsZoneString1 string = `
+var cdnskeyZoneString1 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS 12345   8  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
+test-cds.example.	600	IN	CDNSKEY	257 3 8 AwEAAceRxZ3KZQ61DK/+a77ibs1UWS2bJDQ2btkTsmPEVf4thv695D/vwYuQFfRBNerBChA8RxRSyAbLXEShxBP1Yq0=
 `
-var cdsZoneString2 string = `
+var cdnskeyZoneString2 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS     0   0  0 00=
-test-cds.example.  300 IN CDS     1   0  0 00=
-test-cds.example.  300 IN CDS     0   0  1 00=
-test-cds.example.  300 IN CDS     0   0  0 AA=
-test-cds.example.  300 IN CDS 12345   8  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
+test-cds.example.  300 IN CDNSKEY 0 3 0 AA=
+test-cds.example.  300 IN CDNSKEY 1 3 0 AA=
+test-cds.example.  300 IN CDNSKEY 0 3 7 AA=
+test-cds.example.  300 IN CDNSKEY 0 3 0 0
+test-cds.example.	600	IN	CDNSKEY	257 3 8 AwEAAceRxZ3KZQ61DK/+a77ibs1UWS2bJDQ2btkTsmPEVf4thv695D/vwYuQFfRBNerBChA8RxRSyAbLXEShxBP1Yq0=
 `
-var cdsZoneString3 string = `
+var cdnskeyZoneString3 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS     1   0  0 00
+test-cds.example.  300 IN CDNSKEY 0 3 0 AA=
 `
-var cdsZoneString4 string = `
+var cdnskeyZoneString4 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
 test-cds.example.  300 IN A 1.2.3.4
 `
-var cdsZoneString5 string = `
+var cdnskeyZoneString5 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS     0   0  17 00
+test-cds.example.  300 IN CDNSKEY 27 3 0 AA=
 `
-var cdsZoneString6 string = `
+var cdnskeyZoneString6 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS     0   0  0 0
+test-cds.example.  300 IN CDNSKEY 0 4 0 AA=
 `
-var cdsZoneString7 string = `
+var cdnskeyZoneString7 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS     0   0  0 FF=
+test-cds.example.  300 IN CDNSKEY 0 3 27 AA=
 `
-var cdsZoneString8 string = `
+var cdnskeyZoneString8 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS     0   0  0 AAFF
+test-cds.example.  300 IN CDNSKEY 0 3 0 00
 `
-var cdsZoneString9 string = `
+var cdnskeyZoneString9 string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS     0   0  0 00
+test-cds.example.  300 IN CDNSKEY 0 3 0 0
 `
-var cdsZoneStringA string = `
+var cdnskeyZoneStringA string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS     0   0  0 00
+test-cds.example.  300 IN CDNSKEY 0 3 0 AA=
 test-cds.example.  300 IN CDS 12345   8  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
 `
 
-var cdsZoneStringB string = `
+var cdnskeyZoneStringB string = `
 ;; Zone: test-cds.example.
 ;
 test-cds.example.	600	IN	SOA	test.example. mail.example. 1410271268 7200 3600 1209600 600
@@ -90,7 +90,7 @@ test-cds.example.	600	IN	RRSIG	NSEC 8 2 600 20300101000000 20230101000000 38170 
 test-cds.example.	600	IN	RRSIG	NSEC 13 2 600 20300101000000 20230101000000 40624 test-cds.example. 4cRQIH4PMsG6WBgL6DUCHMyZTGP/+rgLa4nsGtBQZ8bb7FRtUPfRWlu7YzthTEuKh5ykpV+FAqGDj6b2wLeVgQ==
 ;
 `
-var cdsZoneStringC string = `
+var cdnskeyZoneStringC string = `
 ;; Zone: test-cds.example.
 ;
 test-cds.example.	600	IN	SOA	test.example. mail.example. 1410271268 7200 3600 1209600 600
@@ -116,7 +116,7 @@ test-cds.example.	600	IN	NSEC	test-cds.example. SOA RRSIG NSEC DNSKEY CDS CDNSKE
 test-cds.example.	600	IN	RRSIG	NSEC 8 2 600 20300101000000 20230101000000 47084 test-cds.example. fyvI/R/tsgjPebsBgurh8zZ2MlX18q1LuK1AMiF+jO9Vi7R7C8CtuE+Gn1i89KogEvQYKX9890RvZMEXG9TZ9A==
 ;
 `
-var cdsZoneStringD string = `
+var cdnskeyZoneStringD string = `
 ;; Zone: test-cds.example.
 ;
 test-cds.example.	600	IN	SOA	test.example. mail.example. 1410271268 7200 3600 1209600 600
@@ -145,7 +145,7 @@ test-cds.example.	600	IN	NSEC	test-cds.example. SOA RRSIG NSEC DNSKEY CDS CDNSKE
 test-cds.example.	600	IN	RRSIG	NSEC 13 2 600 20300101000000 20230101000000 40624 test-cds.example. 2O6dcFwAcuFReqBZmILkRfmYkvNpAFmIm7vsWmbbOiwmw5+iWqaD4/zp72ar/uZqxHekOO93Va/rl/uN182qBA==
 ;
 `
-var cdsZoneStringE string = `
+var cdnskeyZoneStringE string = `
 ;; Zone: test-cds.example.
 ;
 test-cds.example.	600	IN	SOA	test.example. mail.example. 1410271268 7200 3600 1209600 600
@@ -171,7 +171,7 @@ test-cds.example.	600	IN	NSEC	test-cds.example. SOA RRSIG NSEC DNSKEY CDS CDNSKE
 test-cds.example.	600	IN	RRSIG	NSEC 13 2 600 20300101000000 20230101000000 40624 test-cds.example. Ey/4TuaYtlAofNnJi8I9cc90ULWxSQXb7r+sob/tVpXu1BlPAnKNWrBD5u0jsIRBvYI4xr4+MdOmgJivBmeM8A==
 ;
 `
-var cdsZoneStringF string = `
+var cdnskeyZoneStringF string = `
 ;; Zone: test-cds.example.
 ;
 test-cds.example.	600	IN	SOA	test.example. mail.example. 1410271268 7200 3600 1209600 600
@@ -200,7 +200,7 @@ test-cds.example.	600	IN	RRSIG	NSEC 15 2 600 20300101000000 20230101000000 57655
 ;
 `
 
-var cdsZoneStringG string = `
+var cdnskeyZoneStringG string = `
 ;; Zone: test-cds.example.
 ;
 test-cds.example.	600	IN	SOA	test.example. mail.example. 1410271268 7200 3600 1209600 600
@@ -229,35 +229,35 @@ test-cds.example.	600	IN	RRSIG	NSEC 13 2 600 20300101000000 20230101000000 40624
 ;
 `
 
-var cdsZoneStringH string = `
+var cdnskeyZoneStringH string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS 12345   8  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
+test-cds.example.  300 IN CDNSKEY 12345   8  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
 `
-var cdsZoneStringI string = `
+var cdnskeyZoneStringI string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS 0   8  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
+test-cds.example.  300 IN CDNSKEY 0   8  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
 `
-var cdsZoneStringJ string = `
+var cdnskeyZoneStringJ string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS 12345   101  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
+test-cds.example.  300 IN CDNSKEY 12345   101  2 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
 `
-var cdsZoneStringK string = `
+var cdnskeyZoneStringK string = `
 test-cds.example.	600	IN SOA	test.example. mail.example. 1410271268 7200	3600	14d 	600
-test-cds.example.  300 IN CDS 12345   8  17 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
+test-cds.example.  300 IN CDNSKEY 12345   8  17 D4B7D520E7BB5F0F67674A0CCEB1E3E0614B93C4F9E99B8383F6A1E4469DA50A
 `
 
-func TestCheckCDS(t *testing.T) {
+func TestCheckCDNSKEY(t *testing.T) {
 	cases := []struct {
 		Zone     string
 		Result
 	}{
-		{cdsZoneStringA, Result{2, 0}},
-		{cdsZoneStringB, Result{0, 1}},
-		{cdsZoneStringC, Result{0, 1}},
-		{cdsZoneStringD, Result{0, 2}},
-		{cdsZoneStringE, Result{0, 2}},
-		{cdsZoneStringF, Result{0, 3}},
-		{cdsZoneStringG, Result{1, 1}},
+		{cdnskeyZoneStringA, Result{1, 1}},
+		{cdnskeyZoneStringB, Result{1, 8}},
+		{cdnskeyZoneStringC, Result{1, 8}},
+		{cdnskeyZoneStringD, Result{1, 9}},
+		{cdnskeyZoneStringE, Result{1, 9}},
+		{cdnskeyZoneStringF, Result{1, 8}},
+		{cdnskeyZoneStringG, Result{1, 2}},
 	}
 
 	for i, c := range cases {
@@ -266,76 +266,49 @@ func TestCheckCDS(t *testing.T) {
 		
 		log.Debugf("TESTCASE %d",i)
 
-		if r := checkCDS(cache, origin); r != c.Result {
-			t.Logf("Test case %d: checkCDS expected %d errors and %d warnings, found %d errors and %d warnings..", i, c.errors, c.warnings, r.errors, r.warnings)
+		if r := checkCDNSKEY(cache, origin); r != c.Result {
+			t.Logf("Test case %d: checkCDNSKEY expected %d errors and %d warnings, found %d errors and %d warnings..", i, c.errors, c.warnings, r.errors, r.warnings)
 			t.Fail()
 		}
 	}
 }
 
-func TestCheckCDSzero(t *testing.T) {
+func TestCheckCDNSKEYzero(t *testing.T) {
 	cases := []struct {
 		Zone     string
 		Result
 	}{
-		{cdsZoneString0, Result{0, 0}},
-		{cdsZoneString1, Result{0, 0}},
-		{cdsZoneString2, Result{1, 0}},
-		{cdsZoneString3, Result{0, 0}},
-		{cdsZoneString5, Result{0, 0}},
-		{cdsZoneString7, Result{0, 0}},
-		{cdsZoneString8, Result{0, 0}},
-		{cdsZoneString9, Result{0, 0}},
-		{cdsZoneStringA, Result{1, 0}},
+		{cdnskeyZoneString0, Result{0, 0}},
+		{cdnskeyZoneString1, Result{0, 0}},
+		{cdnskeyZoneString2, Result{1, 0}},
+		{cdnskeyZoneString3, Result{0, 0}},
+		{cdnskeyZoneString5, Result{0, 0}},
+		{cdnskeyZoneString7, Result{0, 0}},
+		{cdnskeyZoneString8, Result{0, 0}},
+		{cdnskeyZoneString9, Result{0, 0}},
+		{cdnskeyZoneStringA, Result{0, 0}},
 	}
 
 	for i, c := range cases {
 		myReader := strings.NewReader(c.Zone)
 		origin, cache := readZonefile(myReader)
 
-		if r := checkCDSzero(cache, origin); r != c.Result {
-			t.Logf("Test case %d: checkCDSzero expected %d errors and %d warnings, found %d errors and %d warnings..", i, c.errors, c.warnings, r.errors, r.warnings)
+		if r := checkCDNSKEYzero(cache, origin); r != c.Result {
+			t.Logf("Test case %d: checkCDNSKEYzero expected %d errors and %d warnings, found %d errors and %d warnings..", i, c.errors, c.warnings, r.errors, r.warnings)
 			t.Fail()
 		}
 	}
 }
 
-func TestCheckCDSparam(t *testing.T) {
+func TestCheckCDNSKEYparam(t *testing.T) {
 	cases := []struct {
 		Zone     string
 		Result
 	}{
-		{cdsZoneStringH, Result{0, 0}},
-		{cdsZoneStringI, Result{0, 0}},
-		{cdsZoneStringJ, Result{1, 0}},
-		{cdsZoneStringK, Result{1, 0}},
-	}
-
-	for i, c := range cases {
-		myReader := strings.NewReader(c.Zone)
-		origin, cache := readZonefile(myReader)
-		
-		log.Debugf("TESTCASE %d",i)
-
-		if r := checkCDSparam(cache, origin); r != c.Result {
-			t.Logf("Test case %d: checkCDSparam expected %d errors and %d warnings, found %d errors and %d warnings..", i, c.errors, c.warnings, r.errors, r.warnings)
-			t.Fail()
-		}
-	}
-}
-
-
-func TestCheckCDSsignsDNSKEY(t *testing.T) {
-	cases := []struct {
-		Zone     string
-		Result
-	}{
-		{cdsZoneStringB, Result{0, 1}},
-		{cdsZoneStringC, Result{0, 1}},
-		{cdsZoneStringD, Result{0, 1}},
-		{cdsZoneStringE, Result{0, 1}},
-		{cdsZoneStringF, Result{0, 3}},
-		{cdsZoneStringG, Result{1, 1}},
+		{cdnskeyZoneStringH, Result{2, 1}},
+		{cdnskeyZoneStringI, Result{2, 0}},
+		{cdnskeyZoneStringJ, Result{2, 1}},
+		{cdnskeyZoneStringK, Result{2, 1}},
 	}
 
 	for i, c := range cases {
@@ -344,8 +317,35 @@ func TestCheckCDSsignsDNSKEY(t *testing.T) {
 		
 		log.Debugf("TESTCASE %d",i)
 
-		if r := checkCDSsignsDNSKEY(cache, origin); r != c.Result {
-			t.Logf("Test case %d: checkCDSsignsDNSKEY expected %d errors and %d warnings, found %d errors and %d warnings..", i, c.errors, c.warnings, r.errors, r.warnings)
+		if r := checkCDNSKEYparam(cache, origin); r != c.Result {
+			t.Logf("Test case %d: checkCDNSKEYparam expected %d errors and %d warnings, found %d errors and %d warnings..", i, c.errors, c.warnings, r.errors, r.warnings)
+			t.Fail()
+		}
+	}
+}
+
+
+func TestCheckCDNSKEYsignsDNSKEY(t *testing.T) {
+	cases := []struct {
+		Zone     string
+		Result
+	}{
+		{cdnskeyZoneStringB, Result{1, 4}},
+		{cdnskeyZoneStringC, Result{1, 4}},
+		{cdnskeyZoneStringD, Result{1, 4}},
+		{cdnskeyZoneStringE, Result{1, 4}},
+		{cdnskeyZoneStringF, Result{1, 4}},
+		{cdnskeyZoneStringG, Result{1, 1}},
+	}
+
+	for i, c := range cases {
+		myReader := strings.NewReader(c.Zone)
+		origin, cache := readZonefile(myReader)
+		
+		log.Debugf("TESTCASE %d",i)
+
+		if r := checkCDNSKEYsignsDNSKEY(cache, origin); r != c.Result {
+			t.Logf("Test case %d: checkCDNSKEYsignsDNSKEY expected %d errors and %d warnings, found %d errors and %d warnings..", i, c.errors, c.warnings, r.errors, r.warnings)
 			t.Fail()
 		}
 	}

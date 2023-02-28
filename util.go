@@ -152,33 +152,39 @@ func getNsecLabels(cache Cache, origin string) []string {
 		if !strings.HasSuffix(label, origin) {
 			continue
 		}
+
 		/*
 			ONLY IN ZONE LABELS BELOW
 		*/
+
 		// if the name is a delegation point it has nsec
 		if _, ok := cache[label]["NS"]; ok {
 			labels = append(labels, Reverse(label))
 			continue
 		}
-		if !isDelegated(label, cache, origin) {
-			// NSEC3 records do not get NSEC records
-			if _, ok := cache[label]["NSEC3"]; ok {
-				nsec3only := true
-				for l := range cache[label] {
-					if l != "NSEC3" && l != "RRSIGNSEC3" {
-						nsec3only = false
-						break
-					}
-				}
-				if nsec3only {
-					// no nsec
-					continue
-				}
-			}
-			labels = append(labels, Reverse(label))
+
+		if isDelegated(label, cache, origin) {
+			// this is glue, no nsec
 			continue
 		}
-		// this is glue, no nsec
+
+		// NSEC3 records do not get NSEC records
+		if _, ok := cache[label]["NSEC3"]; ok {
+			nsec3only := true
+			for l := range cache[label] {
+				if l != "NSEC3" && l != "RRSIGNSEC3" {
+					nsec3only = false
+					break
+				}
+			}
+			if nsec3only {
+				// this is a nsec3 hash, no nsec record needed
+				continue
+			}
+		}
+
+		// zone data, needs an nsec record
+		labels = append(labels, Reverse(label))
 	}
 	log.Debugf("Get NSEC labels unsorted %v",time.Since(t0))
 

@@ -6,6 +6,12 @@ import (
 )
 
 func checkNSEC(cache Cache, origin string) (r Result) {
+	r.Add(checkNsecChain(cache, origin))
+	r.Add(checkNoAdditionalNsec(cache, origin))
+	return
+}
+
+func checkNsecChain(cache Cache, origin string) (r Result) {
 	var nseclabels []string = getNsecLabels(cache, origin)
 	for i := range nseclabels {
 		if _, ok := cache[nseclabels[i]]["NSEC"]; !ok {
@@ -26,6 +32,29 @@ func checkNSEC(cache Cache, origin string) (r Result) {
 			log.Errorf("NSEC record for label %s has %s as next domain. expected %s", nseclabels[i], nsec.NextDomain, nseclabels[nextindex])
 			r.errors += 1
 		}
+	}
+
+
+	return
+}
+
+// 	We try to find labels with nsec records that shouldn't have one
+func checkNoAdditionalNsec(cache Cache, origin string) (r Result) {
+	/*
+		getNsecLabels and getLAbels both return a sorted label list.
+	*/
+	nseclabels := getNsecLabels(cache, origin)
+	index := 0
+	for _,label := range getLabels(cache) {
+		if _, ok := cache[label]["NSEC"]; ok {
+			if label != nseclabels[index] {
+				log.Errorf("Label %s should not have a NSEC record", label)
+				r.errors += 1
+				continue
+			} else {
+				index++
+			}
+		} 
 	}
 	return
 }

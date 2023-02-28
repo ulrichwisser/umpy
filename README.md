@@ -56,11 +56,14 @@ Test 2: 100 runs over all test zone from jdnssec-tools
 |jdnssec-verify ||
 |kzonecheck ||
 
+TODO: BENCHMARK
+
 # Feature Comparison
 
 | Feature | umpy | ldns-verify | dnssec-verify | jdnssec-verify | kzonecheck |
 |---------|------------|-------------|---------------|----------------|------------|
 
+TODO: FEATURE COMPARISON
 
 # Build
 
@@ -139,8 +142,6 @@ Configuration: see Allowed Algorithms and Allowed Digest Types
 
 Configuration: see Allowed Algorithms
 
-TODO: CDNSKEY
-
 ### CDS/CDNSKEY
 
 - checks that CDS and CDNSKEY point to the same keys or both use algorithm zero
@@ -171,8 +172,6 @@ The command line argument --nsec can force umpy to run this test
 - checks that all labels that should have a NSEC record really have one
 - checks that all labels that should have a NSEC record have exactly one
 
-TODO: check that any other labels do not have a NSEC record
-
 ### NSEC3
 
 - checks that all NSEC3 records are linked in one loop in the right order
@@ -188,8 +187,8 @@ For configuration see section NSEC3 Configuration
 ### NSEC3PARAM
 
 - checks that exactly one NSEC3PARAM record is found
-- checks NSEC3PARAM against recommendations in
-  https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-nsec3-guidance
+- checks NSEC3PARAM against recommendations in RFC 9276
+  https://datatracker.ietf.org/doc/html/rfc9276
 
 For configuration see section NSEC3 Configuration
 

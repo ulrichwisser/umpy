@@ -98,7 +98,6 @@ func checkRRSIGTiming(rrsig *dns.RRSIG, minage, maxage, minvalid, maxvalid uint3
 }
 
 func checkSig(keys []dns.RR, rrset []dns.RR, rrsigs []dns.RR) (r Result) {
-	defer log.Trace("CHECKSIG").Stop(nil)
 
 	// Check parameters
 	if !dns.IsRRset(keys) || keys[0].Header().Rrtype != dns.TypeDNSKEY {

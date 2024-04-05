@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/miekg/dns"
 	"github.com/spf13/viper"
 )
@@ -16,8 +17,18 @@ func checkNSEC3(cache Cache, origin string) (r Result) {
 }
 
 // checkNSEC3chain checks if all NSEC3 records in the cache are linked into one chain
-// and if all NSEC3 records follow the recommendations of RFC TBD
+// and if all NSEC3 records follow the recommendations of RFC 9276
 func checkNSEC3chain(cache Cache, origin string) (r Result) {
+	// get NSEC3PARAM record (needed to check salt)
+	var nsec3param *dns.NSEC3PARAM
+	if _, ok := cache[origin]["NSEC3PARAM"]; ok {
+		nsec3param = cache[origin]["NSEC3PARAM"][0].(*dns.NSEC3PARAM)
+	} else {
+		log.Error("No NSEC3PARAM found.")
+		r.errors++
+		return
+	}
+
 	// extract all labels with an NSEC3 record
 	nsec3labels := make([]string, 0)
 	for l := range cache {
@@ -31,9 +42,7 @@ func checkNSEC3chain(cache Cache, origin string) (r Result) {
 	for i := range nsec3labels {
 		// only one NSEC3 record per label
 		if len(cache[nsec3labels[i]]["NSEC3"]) != 1 {
-			if viper.GetInt("verbose") > 0 {
-				fmt.Printf("Label %s does have %d NSEC3 records, expected 1\n", nsec3labels[i], len(cache[nsec3labels[i]]["NSEC3"]))
-			}
+			log.Errorf("Label %s does have %d NSEC3 records, expected 1\n", nsec3labels[i], len(cache[nsec3labels[i]]["NSEC3"]))
 			r.errors++
 			continue
 		}
@@ -46,13 +55,11 @@ func checkNSEC3chain(cache Cache, origin string) (r Result) {
 		nsec3 := cache[nsec3labels[i]]["NSEC3"][0].(*dns.NSEC3)
 
 		// check NSEC3 record
-		r.Add(checkNSEC3rr(nsec3))
+		r.Add(checkNSEC3rr(nsec3, nsec3param))
 
 		// check chain
 		if nsec3.NextDomain+"."+origin != nsec3labels[nextindex] {
-			if viper.GetInt("verbose") > 0 {
-				fmt.Printf("NSEC3 record for label %s has %s as next domain. expected %s\n", nsec3labels[i], nsec3.NextDomain, nsec3labels[nextindex])
-			}
+			log.Errorf("NSEC3 record for label %s has %s as next domain. expected %s\n", nsec3labels[i], nsec3.NextDomain, nsec3labels[nextindex])
 			r.errors++
 		}
 	}
@@ -60,56 +67,48 @@ func checkNSEC3chain(cache Cache, origin string) (r Result) {
 	return
 }
 
-// checkNSEC3rr checks if a NSEC3 record follows RFC TBD
-// TODO(uw): Fix RFC number
-func checkNSEC3rr(nsec3 *dns.NSEC3) (r Result) {
+// checkNSEC3rr checks if a NSEC3 record follows RFC 9276
+func checkNSEC3rr(nsec3 *dns.NSEC3, nsec3param *dns.NSEC3PARAM) (r Result) {
 	// Hash - only allowed value is  SHA-1 == 1
 	if nsec3.Hash != dns.SHA1 {
-		if viper.GetInt("verbose") > 1 {
-			fmt.Printf("Label %s NSEC3 uses an unknown hash algorithm %d. Defined is only SHA-1 (1).\n", nsec3.Header().Name, nsec3.Hash)
-		}
+		log.Errorf("Label %s NSEC3 uses an unknown hash algorithm %d. Defined is only SHA-1 (1).\n", nsec3.Header().Name, nsec3.Hash)
 		r.errors++
 	}
 	// Only "no flags" or opt-out are defined
 	if nsec3.Flags != 0 && nsec3.Flags != 1 {
-		if viper.GetInt("verbose") > 0 {
-			fmt.Printf("Label %s NSEC3 has flag field with value %d, allowed are 0 or 1.\n", nsec3.Header().Name, nsec3.Flags)
-		}
+		log.Errorf("Label %s NSEC3 has flag field with value %d, allowed are 0 or 1.\n", nsec3.Header().Name, nsec3.Flags)
 		r.errors++
 	}
 	// Opt-Out is not recommended, warning can be disabled through config
 	if !viper.GetBool(NSEC3_OPTOUTOK) && nsec3.Flags&1 == 1 {
-		if viper.GetInt("verbose") > 1 {
-			fmt.Printf("Label %s NSEC3 is using opt-out, opt-out is not recommended.\n", nsec3.Header().Name)
-		}
+		log.Warnf("Label %s NSEC3 is using opt-out, opt-out is not recommended.\n", nsec3.Header().Name)
 		r.warnings++
 	}
 	// Iterations are recommended to be set to 0
 	// Iterations above 10 are considered harmful anf might be treated as bogus
 	// number of max iterations can be changed in config
 	if int(nsec3.Iterations) > viper.GetInt(NSEC3_MAXITERATIONS) {
-		if viper.GetInt("verbose") > 1 {
-			fmt.Printf("Label %s has NSEC3 iterations of %d, values above %d are possibly treated as bogus .\n", nsec3.Header().Name, nsec3.Iterations, viper.GetInt(NSEC3_MAXITERATIONS))
-		}
+		log.Errorf("Label %s has NSEC3 iterations of %d, values above %d are possibly treated as bogus .\n", nsec3.Header().Name, nsec3.Iterations, viper.GetInt(NSEC3_MAXITERATIONS))
 		r.errors++
 	} else if nsec3.Iterations != 0 {
-		if viper.GetInt("verbose") > 1 {
-			fmt.Printf("Label %s has NSEC3 iterations of %d, recommended is 0.\n", nsec3.Header().Name, nsec3.Iterations)
-		}
+		log.Warnf("Label %s has NSEC3 iterations of %d, recommended is 0.\n", nsec3.Header().Name, nsec3.Iterations)
 		r.warnings++
 	}
 	// Salt should not be used
 	if nsec3.SaltLength > 0 || nsec3.Salt != "" {
-		if viper.GetInt("verbose") > 1 {
-			fmt.Printf("Label %s NSEC3 uses salt. Using salt is not recommended.\n", nsec3.Header().Name)
-		}
+		log.Warnf("Label %s NSEC3 uses salt. Using salt is not recommended.\n", nsec3.Header().Name)
 		r.warnings++
 	}
+	// Salt should be same salt as in NSEC3PARAM
+	if nsec3.Salt != nsec3param.Salt {
+		log.Errorf("Label %s NSEC3 salt differs from NSEC3PARAM salt. NSEC3 salt: '%s'  NSEC3PARAM salt: '%s'\n", nsec3.Header().Name, nsec3.Salt, nsec3param.Salt)
+		r.errors++
+	}
+
 	// done
 	return
 }
 
-//
 type nsec3entity struct {
 	hash          string
 	originalowner string
@@ -136,9 +135,7 @@ func checkNSEC3Labels(cache Cache, origin string) (r Result) {
 	if _, ok := cache[origin]["NSEC3PARAM"]; ok {
 		nsec3param = cache[origin]["NSEC3PARAM"][0].(*dns.NSEC3PARAM)
 	} else {
-		if viper.GetInt("verbose") > 0 {
-			fmt.Println("No NSEC3PARAM found.")
-		}
+		log.Error("No NSEC3PARAM found.")
 		r.errors++
 		return
 	}

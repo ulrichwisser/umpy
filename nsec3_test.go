@@ -312,12 +312,14 @@ func TestCheckNSEC3rr(t *testing.T) {
 		{NewRR("test. NSEC3 1 2  0 -    2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 0, 1},
 		{NewRR("test. NSEC3 1 0  1 -    2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 1, 0},
 		{NewRR("test. NSEC3 1 0 11 -    2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 0, 1},
-		{NewRR("test. NSEC3 1 0  0 AABB 2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 1, 0},
-		{NewRR("test. NSEC3 2 5 99 CCDD 2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 2, 3},
+		{NewRR("test. NSEC3 1 0  0 AABB 2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 1, 1},
+		{NewRR("test. NSEC3 2 5 99 CCDD 2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 2, 4},
 	}
 
+	nsec3param := NewRR("test. IN NSEC3PARAM 1 0 0 -").(*dns.NSEC3PARAM)
+
 	for i, c := range cases {
-		r := checkNSEC3rr(c.Nsec3)
+		r := checkNSEC3rr(c.Nsec3, nsec3param)
 		if r.errors != c.ExpectedErrors {
 			t.Logf("Test case %d: checkNSEC3rr expected %d errors found %d errors.\n.", i, c.ExpectedErrors, r.errors)
 			t.Fail()

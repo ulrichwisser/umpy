@@ -1,4 +1,5 @@
-![example workflow](https://github.com/ulrichwisser/umpy/actions/workflows/push.yml/badge.svg)
+[![Issues](https://img.shields.io/github/issues/markdown-templates/markdown-snippets.svg)](https://github.com/markdown-templates/markdown-snippets/issues)
+![unit tests](https://github.com/ulrichwisser/umpy/actions/workflows/push.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ulrichwisser/umpy)](https://goreportcard.com/report/github.com/ulrichwisser/umpy)
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 [![Creative Commons BYNC-ND 4.0](https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png)](http://creativecommons.org/licenses/by-nc-nd/4.0/)
@@ -8,29 +9,30 @@
 
 # UMPY - The DNSSEC referee
 
+Umpy takes a DNSSEC signed zone file as input and tries to judge all DNSSEC related resource records.
+
+## Main Features
+
+Umpy checks 
+
+1. Validity of all signatures
+1. Completness of the NSEC chain
+1. Inception and expiration of all RRSIG
+1. DS records are checked for well defined values
+1. NSEC3PARAM and NSEC3 records parameters are checked to follow [RFC 9276](https://datatracker.ietf.org/doc/html/rfc9276)
+1. TODO: Completness of NSEC3 chain
+
+Please see below for detailed description of all tests performed.
 
 # STATUS
 
 This project is a work in progress!
 Currently many parts are under construction.
 
-## Main Features
-
-Umpy checks 
-
-1. Validates all signatures
-1. NSEC chain is complete
-1. Age check for all RRSIG
-1. DS records are checked for well defined values
-1. NSEC3PARAM and NSEC3 records parameters are checked to follow [RFC 9276](https://datatracker.ietf.org/doc/html/rfc9276)
-1. TODO: NSEC3 chain is complete
-
-Please see below for detailed description of all tests performed.
-
 # Copyright
 
 All code is licensed under [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html).
-Artwork is licensed under [![Creative Commons BYNC-ND 4.0](https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png)](http://creativecommons.org/licenses/by-nc-nd/4.0/)
+Artwork is licensed under [![Creative Commons BY-NC-ND 4.0](https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png)](http://creativecommons.org/licenses/by-nc-nd/4.0/)
 
 
 # Contributing
@@ -55,6 +57,7 @@ Test 2: 100 runs over all test zone from jdnssec-tools
 |dnssec-verify ||
 |jdnssec-verify ||
 |kzonecheck ||
+|validns ||
 
 TODO: BENCHMARK
 
@@ -67,12 +70,17 @@ TODO: FEATURE COMPARISON
 
 # Build
 
+TODO: Build for various distributions
+
 # Test
 
 This software comes with a large amount of unit tests, all of which can be run by
 ```
 go test
 ```
+and are automatically run on all pull requests and all updates to the main branch.
+
+Current status: ![unit tests](https://github.com/ulrichwisser/umpy/actions/workflows/push.yml/badge.svg)
 
 If you'd like to run a specific unit test or a specific group of unit tests use
 ```
@@ -88,13 +96,12 @@ Ideas and inspiration from
 - dnssec-verify (part of the bind distribution) https://www.isc.org/bind/
 - jdnssec-tools https://github.com/dblacka/jdnssec-tools
 
-
 ## Configuration
 
 umpy can be configured to only run some of the tests and many tests can be
 configured. All configuration is done in a config file in YAML format.
 By default `~/.umpy` is loaded followed by `./.umpy.` But it can be specified on the
-command line `umpy --config  default.conf`.
+command line `umpy --config  path/to/config.yaml`.
 
 ### Command Line Arguments
 
@@ -103,7 +110,7 @@ command line `umpy --config  default.conf`.
 |--verbose | -v | increase the level of verbosity (1=error,2=warnings,3=info,4=debug)
 |--nsec    |    | force to run NSEC checks
 |--nsec3   |    | force to run NSEC3 checks
-|--norrsig |    | do nor run RRSIG checks
+|--norrsig |    | do not run RRSIG checks
 |--now     |    | set timestamp for RRSIG evaluation, format: YYYY-MM-DDTHH:MM:SS+0000
 |--config  | -f | give a location of a config file to read
 
@@ -175,20 +182,19 @@ The command line argument --nsec can force umpy to run this test
 ### NSEC3
 
 - checks that all NSEC3 records are linked in one loop in the right order
-- checks all NSEC3 records against recommendations in RFC 9276
-  https://datatracker.ietf.org/doc/html/rfc9276
+- checks all NSEC3 records against recommendations in [RFC 9276](https://datatracker.ietf.org/doc/html/rfc9276)
+- check all NSEC3 records use parameters from NSEC3PARAM
+- check all NSEC3 records use same salt as NSEC3PARAM
 
-TODO: check that all needed NSEC3 records are in the zone
-
-TODO: check that all NSEC3 records in the zone are allowed
+- TODO: check that all needed NSEC3 records are in the zone
+- TODO: check that all NSEC3 records in the zone are allowed
 
 For configuration see section NSEC3 Configuration
 
 ### NSEC3PARAM
 
 - checks that exactly one NSEC3PARAM record is found
-- checks NSEC3PARAM against recommendations in RFC 9276
-  https://datatracker.ietf.org/doc/html/rfc9276
+- checks NSEC3PARAM against recommendations in [RFC 9276](https://datatracker.ietf.org/doc/html/rfc9276)
 
 For configuration see section NSEC3 Configuration
 
@@ -220,8 +226,7 @@ Please see DNSSEC timings for details.
 
 The list of allowed algorithms can be configured. It is used for DS records and DNSKEY records.
 To allow or forbid a specific algorithm one of the following variables have to be set to true or false.
-The list is from the IANA list of well defined DNSSEC algorithms
-https://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml
+The list is from the [IANA list of well defined DNSSEC algorithms](https://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml)
 
 | Algorithm | Default value |
 |-----------|---------------|
@@ -249,8 +254,9 @@ ALGORITHM666 = true
 
 ### Allowed Digest Types
 
-The list of allowed digest types can be configured. Digest types from the IANA list
-https://www.iana.org/assignments/ds-rr-types/ds-rr-types.xhtml can be configured by name
+The list of allowed digest types can be configured. Digest types from the 
+[IANA list](https://www.iana.org/assignments/ds-rr-types/ds-rr-types.xhtml)
+can be configured by name
 
 | Digest Type | Default value |
 |-------------|---------------|
@@ -267,7 +273,7 @@ DIGESTTYPE666 = true
 ### NSEC3 Configuration
 
 NSEC3 records will be checked against all recommendations in
-https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-nsec3-guidance
+[RFC 9276](https://datatracker.ietf.org/doc/html/rfc9276)
 
 For the number of allowed iterations can be configured by
 
@@ -333,9 +339,7 @@ might continue to serve the zone.
 To be sure that secondary servers only serve a fully valid zone, the SOA expire
 value should be shorter then MinValid.
 
-### Multi Signer DNSSEC
 
-
-## Authors
+# Authors
 
 - [@ulrichwisser](https://www.github.com/ulrichwisser)

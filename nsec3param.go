@@ -33,7 +33,7 @@ func checkNSEC3PARAM(cache Cache, origin string) (r Result) {
 		log.Errorf("NSEC3PARAM iterations should be zero, value is %d. Values above %d are possibly treated as bogus.", nsec3param.Iterations, viper.GetInt(NSEC3_MAXITERATIONS))
 		r.errors += 1
 	} else if nsec3param.Iterations != 0 {
-		log.Errorf("NSEC3PARAM iterations should be zero, value is %d.", nsec3param.Iterations)
+		log.Warnf("NSEC3PARAM iterations should be zero, value is %d.", nsec3param.Iterations)
 		r.warnings += 1
 	}
 

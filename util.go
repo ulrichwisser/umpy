@@ -22,7 +22,7 @@ func readZonefile(zonef io.Reader) (origin string, cache Cache) {
 			origin = rr.Header().Name
 		}
 
-		label := rr.Header().Name
+		label := dns.CanonicalName(rr.Header().Name)
 		rrtype := dns.TypeToString[rr.Header().Rrtype]
 		if rr.Header().Rrtype == dns.TypeRRSIG {
 			rrtype = rrtype + dns.TypeToString[rr.(*dns.RRSIG).TypeCovered]

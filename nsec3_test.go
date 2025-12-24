@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/miekg/dns"
 	"github.com/spf13/viper"
 )
 
@@ -130,7 +129,7 @@ P8MH4V9JNCF7I98LKRPB81N79DHOQL5K.test.	14400	IN	RRSIG	NSEC3 13 2 14400 202205011
 /*
 Correct signed zone with ot out
 */
-var nsec3ZoneOptOut0 string = `
+var nsec3Zone2 string = `
 ; test zone with no errors and no warnings
 ; iterations 0
 ; no salt
@@ -188,7 +187,7 @@ Same zone as above but
 - one label points to wrong next secure
 - one extra label
 */
-var nsec3ZoneOptOut1 string = `
+var nsec3Zone3 string = `
 ; test zone with no errors and no warnings
 ; iterations 0
 ; no salt
@@ -240,6 +239,386 @@ a.ns.test.		300	IN	AAAA	bad:0:0:0:0:0:0:cafe
 a.ns.test.		300	IN	RRSIG	AAAA 13 3 300 20220501121558 20220401121558 11082 test. U3b5wqjKSi8fEjPMNRopFuHPOqiR+o/7QqcoMKCRpS3An0tl55pdo129MII62Kwbi5iSFIKbfh+DEpZKTplGuw==
 `
 
+/*
+test zone with empty non terminals
+no opt-out
+*/
+var nsec3Zone4 string = `
+nsec3test.example.  	3600	SOA	dns1.wisser.se. ulrich.wisser.se. 2038 86400 7200 2419200 600
+nsec3test.example.  	3600	NS	ns1.example.
+nsec3test.example.  	3600	NS	ns2.example.
+nsec3test.example.  	3600	MX	0 .
+nsec3test.example.  	3600	TXT	"v=spf1 -all"
+nsec3test.example.  	3600	DNSKEY	256 3 13 XzF2V/VdYpQWUpwwDPAbWiM4Nszvd0Av3KwXI7eiW50vddJgMkNF7KapmpqOaJV1XU8u3g2tdOXBppvuxcevCQ==
+nsec3test.example.  	3600	DNSKEY	257 3 13 BktpKaYvUFPi3pwq/se2IrlezuxvOsfz8O02k/KyNizVkEBaR5QNgYxYC/Xjofti8FZ0evJYAV8ZDZH8ICrVJQ==
+nsec3test.example.  	600	NSEC3PARAM	1 0 0 -
+nsec3test.example.  	0	CDS	35081 13 2 6645A4FFE2C180617690307A658415A53975A2E1D7535501D9251B8DBC39AFE3
+nsec3test.example.  	0	CDNSKEY	257 3 13 BktpKaYvUFPi3pwq/se2IrlezuxvOsfz8O02k/KyNizVkEBaR5QNgYxYC/Xjofti8FZ0evJYAV8ZDZH8ICrVJQ==
+nsec3test.example.  	3600	CAA	0 iodef "mailto:user@nsec3test.example" 
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600	TXT	"Recursive NSEC3 ???"
+a.very.long.name.with.lots.of.labels.nsec3test.example. 3600	TXT	"Surprise!"
+myweb.nsec3test.example.	5	A	1.2.3.4
+notall.empty.terminals.nsec3test.example. 3600	TXT	"Full of Surprises"
+an.even.longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600	TXT	"Bigger Surprise"
+yourweb.nsec3test.example.	6	AAAA	dead::beef
+;; DNSSEC signatures
+nsec3test.example.  	3600	RRSIG	NS 13 2 3600 20250413172312 20250330155312 23903 nsec3test.example. 6bOx7IY4jjgoS20GkgSXcTp9wnpitGwK0e91f3+xpbhQoUAD6plT5raHG2sWWmsWNUTHhUpKND9av7Kl+3nNAw==
+nsec3test.example.  	3600	RRSIG	SOA 13 2 3600 20250413172312 20250330155312 23903 nsec3test.example. gg2lYSD1GHzreUB8CKpWIkLxXsx84ripd2FYJ6Me0OTLuafQdeGrzLZjaUCoDcVdLy+pnEk6CH3M56CTJ0NAcg==
+nsec3test.example.  	3600	RRSIG	MX 13 2 3600 20250413171900 20250330154900 23903 nsec3test.example. gucSxx4UeKuUK9dFh6j8+OgAG7WWT+5eOOQGI/OQyriK2c4pem3dmuFf7Tu30eox8xo1nC8iVY1RDZ0ZPV8dkw==
+nsec3test.example.  	3600	RRSIG	TXT 13 2 3600 20250413171900 20250330154900 23903 nsec3test.example. Grih57677etJIbZwd1XoBqDyzzZ6Zj4Ge7nyn9h0MIqhh0vsOe+KSm9wpoXH/o4DZNfR0dkM5eo361F1OjdtYw==
+nsec3test.example.  	3600	RRSIG	DNSKEY 13 2 3600 20250413171900 20250330154900 35081 nsec3test.example. 3du9bxmUXeyzl4lUqubvRvEA/JmyJdeL7EYbTkjDw+3RmaJEIf8M/7zKc1vaJmJiPmZEDXB7qiuUoLwyNkyPdA==
+nsec3test.example.  	600	RRSIG	NSEC3PARAM 13 2 600 20250413171900 20250330154900 23903 nsec3test.example. shz07m6UEQ+WAK8fq3cAQcryV2AUSim9Azu7drmOGWQAk2MOZgQRT4ZwOM5/Og4L/1nLch32/C9mdUavMzDAgw==
+nsec3test.example.  	0	RRSIG	CDS 13 2 0 20250413171900 20250330154900 35081 nsec3test.example. WMSqH0acnUwQvdxI/PSN7WYmGFMhVl+GCrHsA01k70maX/CAlPcMZcaiYABlkK9hOSnMl5npDXf5DmmDm0Nbtg==
+nsec3test.example.  	0	RRSIG	CDNSKEY 13 2 0 20250413171900 20250330154900 35081 nsec3test.example. QYHArWsGP59QZm3zeRAKcYovsDKQ2Ou+lyWqlHMajnZ5y1Sjh1mneL9eNi/NHbJwCHlkCceAcFji7MtPCEN2yg==
+nsec3test.example.  	3600	RRSIG	CAA 13 2 3600 20250413172312 20250330155312 23903 nsec3test.example. 2OzNIFrJ0Or+fZMdN9RtnvuR5ysZR3vm7OOOPu/jOpEOoFukoTDb+A4KsNo6td6u3b/u09Q7zMuTRDDi2PuARA==
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600	RRSIG	TXT 13 3 600 20250413172312 20250330155312 23903 nsec3test.example. OdudzX3Canzo4Pdi51+885y2nudRV/eJ4W2KeVwQUZZpc5z3zzZsMBDEOUfvN7qY+204tz+F8FyXZ30tLMrd7A==
+a.very.long.name.with.lots.of.labels.nsec3test.example. 3600	RRSIG	TXT 13 10 3600 20250413171900 20250330154900 23903 nsec3test.example. UuDFyNJhb2Ynm0Tbr8pWWH7yatXtjorSNLmsmVlf1TH+pvG86PTzILqpNiiAT4PH992yi+Q5zp9OPS9eku0b2A==
+myweb.nsec3test.example.	5	RRSIG	A 13 3 5 20250413171900 20250330154900 23903 nsec3test.example. DvVSRCUKJbExDGobMQdzwEJAomoPYtrFB/rZ9Fnufc24GTgKHPokePS5FA30q2vzUMYeL5LelCDQf8Eef7JYtA==
+notall.empty.terminals.nsec3test.example. 3600	RRSIG	TXT 13 5 3600 20250413171900 20250330154900 23903 nsec3test.example. GMPBeA8FVaL3OtATgtc8qr/hr7kKDj/rpY7mQglkgxsisTBKw2VIBoOwxjtxRo65Qg9M7YjH9aGS/ViJZ74FRw==
+an.even.longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600	RRSIG	TXT 13 14 3600 20250413171900 20250330154900 23903 nsec3test.example. uyAZ1x3ROSonPTSqv+5AWzPdOgbAwbUt52HUaEGNYTY0Q8JCsgE/7ZnbovpaDvlv+EJEd5Ke432gBqMIN1xdvg==
+yourweb.nsec3test.example.	6	RRSIG	AAAA 13 3 6 20250413171900 20250330154900 23903 nsec3test.example. qjbNIXM9bvWwPE1LB0+RdFdrVd6ogpNzVA4Iz0g3A5SKMfgX1XVirXGe0n4LVipVlgw6Qdc1pT4Lqo4jCfX18A==
+;; DNSSEC NSEC3 chain
+06c8pcvphc1cc19njlj961ugph0drigv.nsec3test.example. 600	NSEC3	1 0 0 - 297iuoulajgd2i9o099bbqahvcbquajj TXT RRSIG
+297iuoulajgd2i9o099bbqahvcbquajj.nsec3test.example. 600	NSEC3	1 0 0 - 43a24pvim4am114vgi9h8aai5cphaup3 
+43a24pvim4am114vgi9h8aai5cphaup3.nsec3test.example. 600	NSEC3	1 0 0 - 4q20755nlpdggon4f9jnfakh8bke91aj 
+4q20755nlpdggon4f9jnfakh8bke91aj.nsec3test.example. 600	NSEC3	1 0 0 - 4smqrtkqok7ud6f2fbpvdeo6qhkhucom 
+4smqrtkqok7ud6f2fbpvdeo6qhkhucom.nsec3test.example. 600	NSEC3	1 0 0 - 6kpn2pqlga6vtd5rljsbb66r9o043n74 NS SOA MX TXT RRSIG DNSKEY NSEC3PARAM CDS CDNSKEY CAA
+6kpn2pqlga6vtd5rljsbb66r9o043n74.nsec3test.example. 600	NSEC3	1 0 0 - 76o9ru4g4oric64ar4vov08lsj641vi3 
+76o9ru4g4oric64ar4vov08lsj641vi3.nsec3test.example. 600	NSEC3	1 0 0 - 870a1mbtr3sb4h72kl9hthhnhqdn2ea0 
+870a1mbtr3sb4h72kl9hthhnhqdn2ea0.nsec3test.example. 600	NSEC3	1 0 0 - a4mr4kv4ih08fr9o15hkp90kcp5jjjq1 
+a4mr4kv4ih08fr9o15hkp90kcp5jjjq1.nsec3test.example. 600	NSEC3	1 0 0 - b2e8fvc5eobktkq353s49lc8jocj2sh0 
+b2e8fvc5eobktkq353s49lc8jocj2sh0.nsec3test.example. 600	NSEC3	1 0 0 - cr2us58h5uj6aho7ngt7pvjk8a8rd4l6 
+cr2us58h5uj6aho7ngt7pvjk8a8rd4l6.nsec3test.example. 600	NSEC3	1 0 0 - ctcd1br4am52ugt5jbllk46hhfvs8qq9 
+ctcd1br4am52ugt5jbllk46hhfvs8qq9.nsec3test.example. 600	NSEC3	1 0 0 - flm8j53e7ji49ocfcjsd9afavtp08sip 
+flm8j53e7ji49ocfcjsd9afavtp08sip.nsec3test.example. 600	NSEC3	1 0 0 - gl526m8r75onql0pfro0v2f9q1k8cbin TXT RRSIG
+gl526m8r75onql0pfro0v2f9q1k8cbin.nsec3test.example. 600	NSEC3	1 0 0 - iqa2214qkhtc9peqkg7mjfng52eipa1p 
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600	NSEC3	1 0 0 - kde5di3i5628fec7od7u7mvfks8olh0b TXT RRSIG
+kde5di3i5628fec7od7u7mvfks8olh0b.nsec3test.example. 600	NSEC3	1 0 0 - kqnh764lcmooqqpdmrc5ckrhmeib3icv AAAA RRSIG
+kqnh764lcmooqqpdmrc5ckrhmeib3icv.nsec3test.example. 600	NSEC3	1 0 0 - lagtn9rsgnirlrq3mm8cpldt9jjg8jqe 
+lagtn9rsgnirlrq3mm8cpldt9jjg8jqe.nsec3test.example. 600	NSEC3	1 0 0 - likj5oatis1ns5bsr5g2m6gc2vgl73pt 
+likj5oatis1ns5bsr5g2m6gc2vgl73pt.nsec3test.example. 600	NSEC3	1 0 0 - o78l4d6n4kf1vghbpq8cksr0rs1n8b92 
+o78l4d6n4kf1vghbpq8cksr0rs1n8b92.nsec3test.example. 600	NSEC3	1 0 0 - pe348v7okvjelb2i26ics3sr9q9l0lmp A RRSIG
+pe348v7okvjelb2i26ics3sr9q9l0lmp.nsec3test.example. 600	NSEC3	1 0 0 - qd72atj73bc41fr2olfj0tmt45l3s5n7 
+qd72atj73bc41fr2olfj0tmt45l3s5n7.nsec3test.example. 600	NSEC3	1 0 0 - s94ogamss7io98p0jddc7larqoe3ul8g TXT RRSIG
+s94ogamss7io98p0jddc7larqoe3ul8g.nsec3test.example. 600	NSEC3	1 0 0 - ukf9jfgnfd2q7llpbasns3cffn1djgaq 
+ukf9jfgnfd2q7llpbasns3cffn1djgaq.nsec3test.example. 600	NSEC3	1 0 0 - 06c8pcvphc1cc19njlj961ugph0drigv 
+;; DNSSEC NSEC3 signatures
+06c8pcvphc1cc19njlj961ugph0drigv.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. A5uFg63CeNjTWH6vrBInRJ208pFI1xeqD6iYsGgLLPbxjvO4h3/9nBbsPAGufq5iwOMdpXBkjoxFcu4T31heIg==
+297iuoulajgd2i9o099bbqahvcbquajj.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. u8hYes6nFon4HIXNSDGmOea8cUq74bQ1avrF8snUc1dD/VZFAdlWB7qIfbl3/OEAK/nwUVfFGON4PaPHZkpNXg==
+43a24pvim4am114vgi9h8aai5cphaup3.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. DJUcI/57iPcIv2gLqye25EDQtKcwrA8466h5F1gymzuFppxRWO5Ya+XclXrEtnKtjIn/VkzyS9lR3h+Bw8ptFA==
+4q20755nlpdggon4f9jnfakh8bke91aj.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. rOyeqsRfGkcD+/PLCXZ0semUNq61cdkxZ5BzArAHVAg+u9Q8rhUi7tC8OpnVa+0zoA6ZTx2iiJJdjZW3jCB7Tw==
+4smqrtkqok7ud6f2fbpvdeo6qhkhucom.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. fyoaYUsStI4bOybdjkZ+Ba458Q6VynaG0r7aPQuvfqNzThX2LHEOmQ5uTK4BkIZlqKFZBTexgw6Kj7DRPmlrzQ==
+6kpn2pqlga6vtd5rljsbb66r9o043n74.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. D/MIwaXoh5icJp5SahRvENMsQfcWUDkmzE49btfosqspInVC8D/lYBGvqKVqk7kgql4nmkUvb0OoiPN0HJsesQ==
+76o9ru4g4oric64ar4vov08lsj641vi3.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. UYQM8LV8SYgUldjJj7r5Zk9Cj1x4PJrelTPyl1kcrEdbXHKeDOB/rUzgfY5douDP7NiIYo1UIaE6PhDY/QQ7xg==
+870a1mbtr3sb4h72kl9hthhnhqdn2ea0.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172312 20250330155312 23903 nsec3test.example. skDVyVw7+meWFgkyzyyziMQFTUmUKWO9AZTFgb9Mjwjgnc1l0Tu/x1e/pTFYXhYWwriRJECB0itmCV6ySBZymA==
+a4mr4kv4ih08fr9o15hkp90kcp5jjjq1.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. Z0g7Y3mxWuMuXjZDWXEqogV/oEpAgY0GQLpS5X+fbSwSGHzB5mLZ3ttw4YHVGyp23IqRloF+gOnynlrKZESBuA==
+b2e8fvc5eobktkq353s49lc8jocj2sh0.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. h7IfIzO2Uf+WLwIUx3Du04foair4vz8NMY7NdqPy/JbyUKMzz/8e7o71YwkDl0b2S17tQXfhwVSGj2wf34oMRw==
+cr2us58h5uj6aho7ngt7pvjk8a8rd4l6.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. N3yUFDl+6vqSSLfCLGhMTg0QYTAdpnXCTTOiXEUdzyA7fXwGB8Q41lGwbUqJRj4z+r1xResCgKQbJdwGCj4kag==
+ctcd1br4am52ugt5jbllk46hhfvs8qq9.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. 49OYsUIGMzmdl0unkI581bF4Vszi7DF7hAVjF3SOZL5t4su361tFFW5vyqTJwfDWNADlQ+wRGrNa2Mfyp9moDQ==
+flm8j53e7ji49ocfcjsd9afavtp08sip.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. qc0Ncdk16kHlcuIcI/6no0Z1K/hxoL7OUgH9SIcNAJzTP4xRmG6ahEVCgDn5+8OlSsY9bjubtoU1CO4Xz/ad0w==
+gl526m8r75onql0pfro0v2f9q1k8cbin.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. PIQpk8eSwPmJz/yMBGO9ZjkX5Eax1J5QMn3ZQLhkUUF9oBEOodHRvRizsT3SpbznKUNaJ2ConaMnDlj/HiCrsg==
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. 5ZWbArAQcHJX6Xwrks+tKa2mpbD9mHxs355i4yJRD+U4lmJrFHl5pwlDUzwSYYzCb8/gXOTGsv4Nkc2gp6d5Bg==
+kde5di3i5628fec7od7u7mvfks8olh0b.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. qVxK67f1rscT3WdiXmqI70YtAQEayPFGZpJQbyMI7JM9BkFJTVVH+e2mxCVq/CgGlOCZINTT4494ECWLqoDtlg==
+kqnh764lcmooqqpdmrc5ckrhmeib3icv.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. G1VCpi1xDSg42M3z+E9S41OB/QCR//n/2rFzFcYjewUwXGTKjb2SVfLp/rgQ6u+p/dPkqtTaG9lyoPY8CgiOcQ==
+lagtn9rsgnirlrq3mm8cpldt9jjg8jqe.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. 6EMczNSFx3LL1eFEJ4LB5bWAiO41NpckJ2V07Z/fs1WnKgsbQned8CFkkSV+DmG5BVN7uDiYsQdO9D3o1XIK1Q==
+likj5oatis1ns5bsr5g2m6gc2vgl73pt.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. YUAKVIFJJpYoFv2fU/nBXxvkFrZtkCgfUl2SW+5bVcopd3UG0pWXAYngVMNLDZce3j0MJfLndJK/5Le3CnwrAQ==
+o78l4d6n4kf1vghbpq8cksr0rs1n8b92.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. EToOjTjDm7rEJelBAYc+V+WPym2yEETbe6ZJi9+koebWOiec9refq172EmUKzdmzZ3w0L1rHmWzYlaf4fHHA2Q==
+pe348v7okvjelb2i26ics3sr9q9l0lmp.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172312 20250330155312 23903 nsec3test.example. L0707994np2n9CfmWL/6wP6cJmbptC5PAMpJ8FEHUNDXBiZH4bwVULKiG+2+T2h6NU53CX6NjSDCsK0Bn7P4vA==
+qd72atj73bc41fr2olfj0tmt45l3s5n7.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172312 20250330155312 23903 nsec3test.example. E54cLgNZcppawfVDwj2Mp5tCrASkDScQoQIYhI4pzihSievONfwJKhOcwR+seT0cOR3GsodwT8CI/asKznQdlw==
+s94ogamss7io98p0jddc7larqoe3ul8g.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. 1tXcv8mHjAIXpYc+idtkpV8Liw7fu0mr4HeCSSSAI11pon6K3a83VDMf0E0+67yerDRgKCV8j8Y4jeDeyDeyBQ==
+ukf9jfgnfd2q7llpbasns3cffn1djgaq.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413171900 20250330154900 23903 nsec3test.example. OIEdDXoZbje2+XR7ljlWahbq+uyBOpJn2eOkFpK/B4Az4mlThVd2qcs5/6FWFakXJoUoMUeA3aLGZvwJ1+lXZw==
+`
+
+/*
+test zone with empty non terminals
+opt-out
+*/
+var nsec3Zone5 string = `
+nsec3test.example.  	3600	SOA	dns1.wisser.se. ulrich.wisser.se. 2041 86400 7200 2419200 600
+nsec3test.example.  	3600	NS	ns1.example.
+nsec3test.example.  	3600	NS	ns2.example.
+nsec3test.example.  	3600	MX	0 .
+nsec3test.example.  	3600	TXT	"v=spf1 -all"
+nsec3test.example.  	3600	DNSKEY	256 3 13 XzF2V/VdYpQWUpwwDPAbWiM4Nszvd0Av3KwXI7eiW50vddJgMkNF7KapmpqOaJV1XU8u3g2tdOXBppvuxcevCQ==
+nsec3test.example.  	3600	DNSKEY	257 3 13 BktpKaYvUFPi3pwq/se2IrlezuxvOsfz8O02k/KyNizVkEBaR5QNgYxYC/Xjofti8FZ0evJYAV8ZDZH8ICrVJQ==
+nsec3test.example.  	600	NSEC3PARAM	1 0 0 -
+nsec3test.example.  	0	CDS	35081 13 2 6645A4FFE2C180617690307A658415A53975A2E1D7535501D9251B8DBC39AFE3
+nsec3test.example.  	0	CDNSKEY	257 3 13 BktpKaYvUFPi3pwq/se2IrlezuxvOsfz8O02k/KyNizVkEBaR5QNgYxYC/Xjofti8FZ0evJYAV8ZDZH8ICrVJQ==
+nsec3test.example.  	3600	CAA	0 iodef "mailto:user@nsec3test.example" 
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600	TXT	"Recursive NSEC3 ???"
+a.very.long.name.with.lots.of.labels.nsec3test.example. 3600	TXT	"Surprise!"
+myweb.nsec3test.example.	5	A	1.2.3.4
+delegated.and.signed.nsec3test.example. 3600	NS	ns6.example.
+delegated.and.signed.nsec3test.example. 3600	DS	35081 13 2 6645A4FFE2C180617690307A658415A53975A2E1D7535501D9251B8DBC39AFE3
+notall.empty.terminals.nsec3test.example. 3600	TXT	"Full of Surprises"
+an.even.longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600	TXT	"Bigger Surprise"
+a.long.delegated.name.with.empty.non.terminals.nsec3test.example. 3600	NS	ns5.example.
+YOURWEB.nsec3test.example.	6	AAAA	dead::beef
+yourweb.nsec3test.example.	6	A 1.2.3.4
+;; DNSSEC signatures
+nsec3test.example.  	3600	RRSIG	NS 13 2 3600 20250413172312 20250330155312 23903 nsec3test.example. 6bOx7IY4jjgoS20GkgSXcTp9wnpitGwK0e91f3+xpbhQoUAD6plT5raHG2sWWmsWNUTHhUpKND9av7Kl+3nNAw==
+nsec3test.example.  	3600	RRSIG	SOA 13 2 3600 20250413174038 20250330161038 23903 nsec3test.example. dziYp8tbFXK41yaTsu8Z0CldzBPyX4KBWuMcc5iljFq4NweLzYu0X8YIqWj45r6uRoYjHVgtTnHqAD+dzUX9EQ==
+nsec3test.example.  	3600	RRSIG	MX 13 2 3600 20250413171900 20250330154900 23903 nsec3test.example. gucSxx4UeKuUK9dFh6j8+OgAG7WWT+5eOOQGI/OQyriK2c4pem3dmuFf7Tu30eox8xo1nC8iVY1RDZ0ZPV8dkw==
+nsec3test.example.  	3600	RRSIG	TXT 13 2 3600 20250413171900 20250330154900 23903 nsec3test.example. Grih57677etJIbZwd1XoBqDyzzZ6Zj4Ge7nyn9h0MIqhh0vsOe+KSm9wpoXH/o4DZNfR0dkM5eo361F1OjdtYw==
+nsec3test.example.  	3600	RRSIG	DNSKEY 13 2 3600 20250413171900 20250330154900 35081 nsec3test.example. 3du9bxmUXeyzl4lUqubvRvEA/JmyJdeL7EYbTkjDw+3RmaJEIf8M/7zKc1vaJmJiPmZEDXB7qiuUoLwyNkyPdA==
+nsec3test.example.  	600	RRSIG	NSEC3PARAM 13 2 600 20250413171900 20250330154900 23903 nsec3test.example. shz07m6UEQ+WAK8fq3cAQcryV2AUSim9Azu7drmOGWQAk2MOZgQRT4ZwOM5/Og4L/1nLch32/C9mdUavMzDAgw==
+nsec3test.example.  	0	RRSIG	CDS 13 2 0 20250413171900 20250330154900 35081 nsec3test.example. WMSqH0acnUwQvdxI/PSN7WYmGFMhVl+GCrHsA01k70maX/CAlPcMZcaiYABlkK9hOSnMl5npDXf5DmmDm0Nbtg==
+nsec3test.example.  	0	RRSIG	CDNSKEY 13 2 0 20250413171900 20250330154900 35081 nsec3test.example. QYHArWsGP59QZm3zeRAKcYovsDKQ2Ou+lyWqlHMajnZ5y1Sjh1mneL9eNi/NHbJwCHlkCceAcFji7MtPCEN2yg==
+nsec3test.example.  	3600	RRSIG	CAA 13 2 3600 20250413172312 20250330155312 23903 nsec3test.example. 2OzNIFrJ0Or+fZMdN9RtnvuR5ysZR3vm7OOOPu/jOpEOoFukoTDb+A4KsNo6td6u3b/u09Q7zMuTRDDi2PuARA==
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600	RRSIG	TXT 13 3 600 20250413172312 20250330155312 23903 nsec3test.example. OdudzX3Canzo4Pdi51+885y2nudRV/eJ4W2KeVwQUZZpc5z3zzZsMBDEOUfvN7qY+204tz+F8FyXZ30tLMrd7A==
+a.very.long.name.with.lots.of.labels.nsec3test.example. 3600	RRSIG	TXT 13 10 3600 20250413171900 20250330154900 23903 nsec3test.example. UuDFyNJhb2Ynm0Tbr8pWWH7yatXtjorSNLmsmVlf1TH+pvG86PTzILqpNiiAT4PH992yi+Q5zp9OPS9eku0b2A==
+myweb.nsec3test.example.	5	RRSIG	A 13 3 5 20250413171900 20250330154900 23903 nsec3test.example. DvVSRCUKJbExDGobMQdzwEJAomoPYtrFB/rZ9Fnufc24GTgKHPokePS5FA30q2vzUMYeL5LelCDQf8Eef7JYtA==
+delegated.and.signed.nsec3test.example. 3600	RRSIG	DS 13 5 3600 20250413174038 20250330161038 23903 nsec3test.example. t4MnwtWfQWVCFhmrajimXIhvXHb74ObeW4YeodQhknqNkzT7qPOkw35VXLMWBzaQEZBDHnvasx2g4kn/AJug8Q==
+notall.empty.terminals.nsec3test.example. 3600	RRSIG	TXT 13 5 3600 20250413171900 20250330154900 23903 nsec3test.example. GMPBeA8FVaL3OtATgtc8qr/hr7kKDj/rpY7mQglkgxsisTBKw2VIBoOwxjtxRo65Qg9M7YjH9aGS/ViJZ74FRw==
+an.even.longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600	RRSIG	TXT 13 14 3600 20250413171900 20250330154900 23903 nsec3test.example. uyAZ1x3ROSonPTSqv+5AWzPdOgbAwbUt52HUaEGNYTY0Q8JCsgE/7ZnbovpaDvlv+EJEd5Ke432gBqMIN1xdvg==
+yourweb.nsec3test.example.	6	RRSIG	AAAA 13 3 6 20250413171900 20250330154900 23903 nsec3test.example. qjbNIXM9bvWwPE1LB0+RdFdrVd6ogpNzVA4Iz0g3A5SKMfgX1XVirXGe0n4LVipVlgw6Qdc1pT4Lqo4jCfX18A==
+;; DNSSEC NSEC3 chain
+06c8pcvphc1cc19njlj961ugph0drigv.nsec3test.example. 600	NSEC3	1 1 0 - 22c3c05cb540s32qqcm7gckneoij3jnj TXT RRSIG
+22c3c05cb540s32qqcm7gckneoij3jnj.nsec3test.example. 600	NSEC3	1 1 0 - 297iuoulajgd2i9o099bbqahvcbquajj 
+297iuoulajgd2i9o099bbqahvcbquajj.nsec3test.example. 600	NSEC3	1 1 0 - 43a24pvim4am114vgi9h8aai5cphaup3 
+43a24pvim4am114vgi9h8aai5cphaup3.nsec3test.example. 600	NSEC3	1 1 0 - 4q20755nlpdggon4f9jnfakh8bke91aj 
+4q20755nlpdggon4f9jnfakh8bke91aj.nsec3test.example. 600	NSEC3	1 1 0 - 4smqrtkqok7ud6f2fbpvdeo6qhkhucom 
+4smqrtkqok7ud6f2fbpvdeo6qhkhucom.nsec3test.example. 600	NSEC3	1 1 0 - 6kpn2pqlga6vtd5rljsbb66r9o043n74 NS SOA MX TXT RRSIG DNSKEY NSEC3PARAM CDS CDNSKEY CAA
+6kpn2pqlga6vtd5rljsbb66r9o043n74.nsec3test.example. 600	NSEC3	1 1 0 - 76o9ru4g4oric64ar4vov08lsj641vi3 
+76o9ru4g4oric64ar4vov08lsj641vi3.nsec3test.example. 600	NSEC3	1 1 0 - 870a1mbtr3sb4h72kl9hthhnhqdn2ea0 
+870a1mbtr3sb4h72kl9hthhnhqdn2ea0.nsec3test.example. 600	NSEC3	1 1 0 - a4mr4kv4ih08fr9o15hkp90kcp5jjjq1 
+a4mr4kv4ih08fr9o15hkp90kcp5jjjq1.nsec3test.example. 600	NSEC3	1 1 0 - b2e8fvc5eobktkq353s49lc8jocj2sh0 
+b2e8fvc5eobktkq353s49lc8jocj2sh0.nsec3test.example. 600	NSEC3	1 1 0 - bgcrbscotodnee02o2g6enro9ajvp48u 
+bgcrbscotodnee02o2g6enro9ajvp48u.nsec3test.example. 600	NSEC3	1 1 0 - cr2us58h5uj6aho7ngt7pvjk8a8rd4l6 
+cr2us58h5uj6aho7ngt7pvjk8a8rd4l6.nsec3test.example. 600	NSEC3	1 1 0 - ctcd1br4am52ugt5jbllk46hhfvs8qq9 
+ctcd1br4am52ugt5jbllk46hhfvs8qq9.nsec3test.example. 600	NSEC3	1 1 0 - flm8j53e7ji49ocfcjsd9afavtp08sip 
+flm8j53e7ji49ocfcjsd9afavtp08sip.nsec3test.example. 600	NSEC3	1 1 0 - fodndl55qos7s564o2q87blqvqv62c7h TXT RRSIG
+fodndl55qos7s564o2q87blqvqv62c7h.nsec3test.example. 600	NSEC3	1 1 0 - gl526m8r75onql0pfro0v2f9q1k8cbin NS DS RRSIG
+gl526m8r75onql0pfro0v2f9q1k8cbin.nsec3test.example. 600	NSEC3	1 1 0 - iqa2214qkhtc9peqkg7mjfng52eipa1p 
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600	NSEC3	1 1 0 - kde5di3i5628fec7od7u7mvfks8olh0b TXT RRSIG
+kde5di3i5628fec7od7u7mvfks8olh0b.nsec3test.example. 600	NSEC3	1 1 0 - kqnh764lcmooqqpdmrc5ckrhmeib3icv AAAA RRSIG
+kqnh764lcmooqqpdmrc5ckrhmeib3icv.nsec3test.example. 600	NSEC3	1 1 0 - lagtn9rsgnirlrq3mm8cpldt9jjg8jqe 
+lagtn9rsgnirlrq3mm8cpldt9jjg8jqe.nsec3test.example. 600	NSEC3	1 1 0 - likj5oatis1ns5bsr5g2m6gc2vgl73pt 
+likj5oatis1ns5bsr5g2m6gc2vgl73pt.nsec3test.example. 600	NSEC3	1 1 0 - o78l4d6n4kf1vghbpq8cksr0rs1n8b92 
+o78l4d6n4kf1vghbpq8cksr0rs1n8b92.nsec3test.example. 600	NSEC3	1 1 0 - pe348v7okvjelb2i26ics3sr9q9l0lmp A RRSIG
+pe348v7okvjelb2i26ics3sr9q9l0lmp.nsec3test.example. 600	NSEC3	1 1 0 - qd72atj73bc41fr2olfj0tmt45l3s5n7 
+qd72atj73bc41fr2olfj0tmt45l3s5n7.nsec3test.example. 600	NSEC3	1 1 0 - s94ogamss7io98p0jddc7larqoe3ul8g TXT RRSIG
+s94ogamss7io98p0jddc7larqoe3ul8g.nsec3test.example. 600	NSEC3	1 1 0 - ukf9jfgnfd2q7llpbasns3cffn1djgaq 
+ukf9jfgnfd2q7llpbasns3cffn1djgaq.nsec3test.example. 600	NSEC3	1 1 0 - 06c8pcvphc1cc19njlj961ugph0drigv 
+;; DNSSEC NSEC3 signatures
+06c8pcvphc1cc19njlj961ugph0drigv.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413174038 20250330161038 23903 nsec3test.example. Yh/qthBAkZPXcvBTXPjVet3YWWRL3K3gFdVNWtGcHLjD9QyxL3icCERZUO9smZEhsb4lvNbyd9HcrsC+BuMPqw==
+22c3c05cb540s32qqcm7gckneoij3jnj.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413174038 20250330161038 23903 nsec3test.example. qbeIFcdCQ6PoCvt7WQZaLSrAXhLBoMqjj40une2bITlGUbajxIS+XsbX45YUe6VXbbwjkVYGq9m6qQPvIirBzw==
+297iuoulajgd2i9o099bbqahvcbquajj.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. 8+ObkM6gyOXbyCbYwFAO/hiZ8fYYoZg1RDdRTZiH/m/8rNSErHlIfLjEZ05DnSO3c6/qJ8rOVqEUVhPhOP/RUQ==
+43a24pvim4am114vgi9h8aai5cphaup3.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. mMmVyZGsHf7oVVAPbYtBWWj9XZ9idKwHI6Y9mr+QNszma0sOO09fqqcEB0Q8afTZuvxh78TYvKQiI6Ype/+NGQ==
+4q20755nlpdggon4f9jnfakh8bke91aj.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. oUz0AgXZTiuWYUNGSNQTvBnTUoEKGOHYga08kCV1S3DS41Pqo6rVBmk0fBDAI+YCW9sRtZTakduUTuLyOhoFtA==
+4smqrtkqok7ud6f2fbpvdeo6qhkhucom.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. lNEmSsONaoO9AgETmxRh2VZXQrzKxBIW8wiU8hEcmlPY0T5TmNrBpOWJwjJOskHVCaocohrYahdgS5P38SPBBg==
+6kpn2pqlga6vtd5rljsbb66r9o043n74.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. dVdfjWrGeZyRm01xUddGzNfa2loyDZqcKSozsLo+qkekkFB64SqFhjnhnczobCJ/v0cLPbltODgRYJ2xx2dshQ==
+76o9ru4g4oric64ar4vov08lsj641vi3.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. 3keP0FUzP6l4grigxxM/tGFtlhnYexaaiKGi+Z81LE3c8sbnpuTbkT5hrKBQFdoPDRYY6Ax6t3ljYsyPRPWgpw==
+870a1mbtr3sb4h72kl9hthhnhqdn2ea0.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. shQU0WfAGYmOxKRS9xYbKxWpg9gOUUil9QAeucddE/lpWk80WQY5m/thid0IGcQ6hsWFTqFHkWmUGB4nfU4+bQ==
+a4mr4kv4ih08fr9o15hkp90kcp5jjjq1.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. xXRFR13ovKTl14f0sKudqS/gK0DEiLW8C+6lIJjqVa181NvEuT/Wpif4D8ntEfIyFPGAWgSqO/TPuu7UfnGlug==
+b2e8fvc5eobktkq353s49lc8jocj2sh0.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413174038 20250330161038 23903 nsec3test.example. 31EmudadM08kq7gh5+K+XTU2gbah9ZFTx5qXmBMI7XQeZHVGJlQGyw6Ej0UiNAFPhuPp1L3jXJbN6xNmysldHg==
+bgcrbscotodnee02o2g6enro9ajvp48u.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413174038 20250330161038 23903 nsec3test.example. /g3HFRW7acE+xDmUqd2Ipiy9MkmSuCwb7F7PAfzAHOXvFCJtvCBbKcbw5tUPUltpIaKZfYqYmUw7T/1y4BmJFA==
+cr2us58h5uj6aho7ngt7pvjk8a8rd4l6.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. eh6tcAokAGgV1j6AgUS8GQXQWeiD141h6Lq9uamI9i/jqSal8FoOp+7OXza3J4i72//Yhhn/9V/tK3CtLVDLMw==
+ctcd1br4am52ugt5jbllk46hhfvs8qq9.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. pmE0rgHOco9fARfppXji02BxXtoE+pxONeLMncsCGHHeRK7HoYioQYsBxAlhrGFqGGpeWePLzTQBTZZrkjWkxQ==
+flm8j53e7ji49ocfcjsd9afavtp08sip.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413174038 20250330161038 23903 nsec3test.example. uPBW/msN0nBnAsUNwX2LoKwLyKcneVc/iNvinkfgRrP4Z0ps6kqbp181rqm2pM19lxzqjqcU4Q4pyf2a2c7Mag==
+fodndl55qos7s564o2q87blqvqv62c7h.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413174038 20250330161038 23903 nsec3test.example. 703jQTZ6+47+En22xCfzSzXNBDWy84yAsVZ/wY1IcrfMM9pzGGHdF62CyNlDUBKqorJK1FMK/5X/7L3dPzPK3w==
+gl526m8r75onql0pfro0v2f9q1k8cbin.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. smIciosgwUUo5JeayR4Z7bWodm3I9DVdS3N+cbG5ypx+CT1p7bgvSrCHbo3EUcpEyUJeiZ7u67ThhYpjysqBZg==
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. WgBrJS84s5tzzHvhwrVr3zJiKwcHFDxcDZS4RZTziPDiLIecVz7JE0QLjPyuYX8IJwuv7d4HxGKOjj1uywqoMg==
+kde5di3i5628fec7od7u7mvfks8olh0b.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. n954q4ymdkTSuHf2D5XYbXONRODbYP+DvKQzwpJvG+HyaamiZR7elAclkfQ1vxQKBWpFN38cX5aueesw1zZElQ==
+kqnh764lcmooqqpdmrc5ckrhmeib3icv.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. aGmRlLWfXakU/rXpNWLqWwHY1uXeUNAxkuQCMzkz6ycoumY4iJYp/AVtfYMTtDhGyYR+0350Fl1Mb5z9gISwIA==
+lagtn9rsgnirlrq3mm8cpldt9jjg8jqe.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. +6r324xKzH7uZneEmlHbOuUOquYcCYo5nAeA4tKbPiqznMG5CvoDgGSavdhdRqmCyV/OU49i892CuqnUMT6akQ==
+likj5oatis1ns5bsr5g2m6gc2vgl73pt.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. qL71A3hKHHIWoeZB4f9m0Iszr0V3lACY9i2wzH5aPje1WS5k/uvjyhwUeh1wVi55msaVEIZ4OAg/RjWD8BM2jA==
+o78l4d6n4kf1vghbpq8cksr0rs1n8b92.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. FDQsMExdUodPymLIx1ANQcZPp9NUH4q4YugO/ytDO3zT4HgMUiprF0Lfdb7dGbLjgddjgJaq9BTeZVtA3DVTzA==
+pe348v7okvjelb2i26ics3sr9q9l0lmp.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. qzV8omgFC3xDvS4bjFaTq86nE+FH9Xxl16ar1Bq9mOYk9bsPINaps42ttf3Q3u/DXKllTwmkgwM/Iw1eX9T81A==
+qd72atj73bc41fr2olfj0tmt45l3s5n7.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. kQwSnV7W89Y3LEkOL042GD23Ao06j1nxQFEr8QI7vma+VEjL0s0G0K+8iYsQwGx8Prss/csjO6iQCB0AtINL1Q==
+s94ogamss7io98p0jddc7larqoe3ul8g.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. aky2V6DbAe9Pybky38NgwESivRhINLwiyJQE6Zunq4C0Hga7vEZtaYK4Ob8K/ZbZlpDC8hIJ4WdiSh/1KQNlQQ==
+ukf9jfgnfd2q7llpbasns3cffn1djgaq.nsec3test.example. 600	RRSIG	NSEC3 13 3 600 20250413172914 20250330155914 23903 nsec3test.example. oirPnBQp5Q5XdiDABNu683Ka/J+KdrcLYtE7LtNoci/LRJFLJQyw2Rq1M/Gzk/fNr0/ETfCRgvONe4UysaDxAQ==
+`
+
+/*
+test zone with empty non terminals
+no opt-out
+*/
+var nsec3Zone6 string = `
+;; Zone dump (Knot DNS 3.5.1)
+nsec3test.example.      3600    SOA     dns1.wisser.se. ulrich.wisser.se. 2120 86400 7200 2419200 600
+nsec3test.example.      3600    NS      ns1.example.
+nsec3test.example.      3600    NS      ns2.example.
+nsec3test.example.      3600    MX      0 .
+nsec3test.example.      3600    TXT     "v=spf1 -all"
+nsec3test.example.      3600    DNSKEY  256 3 13 39dgX5enPJNQX3x4tES3sShW2mjDVNXbZ4pEqdgzbbqSNtyy5mf/wNcRSKxkvmHAReWU2p4FJu9a3FyTl/JSiA==
+nsec3test.example.      3600    DNSKEY  257 3 13 BktpKaYvUFPi3pwq/se2IrlezuxvOsfz8O02k/KyNizVkEBaR5QNgYxYC/Xjofti8FZ0evJYAV8ZDZH8ICrVJQ==
+nsec3test.example.      600     NSEC3PARAM      1 0 0 -
+nsec3test.example.      0       CDS     35081 13 2 6645A4FFE2C180617690307A658415A53975A2E1D7535501D9251B8DBC39AFE3
+nsec3test.example.      0       CDNSKEY 257 3 13 BktpKaYvUFPi3pwq/se2IrlezuxvOsfz8O02k/KyNizVkEBaR5QNgYxYC/Xjofti8FZ0evJYAV8ZDZH8ICrVJQ==
+nsec3test.example.      3600    CAA     0 iodef "mailto:user@nsec3test.example" 
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600 TXT     "Recursive NSEC3 ???"
+delegated.and.signed.nsec3test.example. 3600    NS      ns6.example.
+delegated.and.signed.nsec3test.example. 3600    AAAA    cafe::cafe
+delegated.and.signed.nsec3test.example. 3600    DS      35081 13 2 6645A4FFE2C180617690307A658415A53975A2E1D7535501D9251B8DBC39AFE3
+with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600        TXT     "Bigger Surprise"
+longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600    NS      an.even.longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example.
+an.even.longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600    A       1.2.3.4
+yourweb.nsec3test.example.      6       AAAA    dead::beef
+;; DNSSEC signatures
+nsec3test.example.      3600    RRSIG   NS 13 2 3600 20260104100700 20251221083700 23629 nsec3test.example. RQliOYK2+RFIasvaMZN08A3hKvhnaqBVJKTTn7TSqCl0Qzcs90EV47OLF1mfOcbWZJGGjB+XO+wO/U0aW4y9AQ==
+nsec3test.example.      3600    RRSIG   SOA 13 2 3600 20260106165108 20251223152108 23629 nsec3test.example. s1fFa382ehgxUnqRSvycklpXedcJJ79zZHpo+8JqvJY+/Lrr1XYHzg+79VpxA5E65eY2ITPO16Ivk35bqHOqKg==
+nsec3test.example.      3600    RRSIG   MX 13 2 3600 20260104100700 20251221083700 23629 nsec3test.example. WPDo1Nij5/XQWnSUIDcoQKwqA/MAmdqKW5QRTFihc+WR19OgAQb84+lLPdkrKGhrZb/tzli8f/K4HEqufrOb1Q==
+nsec3test.example.      3600    RRSIG   TXT 13 2 3600 20260104100700 20251221083700 23629 nsec3test.example. /ptxgtMsl7xQoQwJEEovnEvjaU8i37xbT9g5FLnQk2+/bZI7JmgpPkkmErTKPJSlk97CbQlflfjaB7uj5wPTJg==
+nsec3test.example.      3600    RRSIG   DNSKEY 13 2 3600 20260104120700 20251221103700 35081 nsec3test.example. hHArLWjrS5wGmD2N9FU1g4pOT2jZF/c/JOvIOzeMROd2pMMwyqafQSg5xWkx/XIvtuTNsuyFYQuWmJjeQfLwIA==
+nsec3test.example.      600     RRSIG   NSEC3PARAM 13 2 600 20260104100700 20251221083700 23629 nsec3test.example. XMPbDdWVgCSEAjscLiPufNOqi+ylWU4Qui3HqYnWY6VZTApfWYP2I/G8WmzICaYXYX21TBKi/mXO2GTtNDdRqQ==
+nsec3test.example.      0       RRSIG   CDS 13 2 0 20260101134300 20251218121300 35081 nsec3test.example. bjZdNYBSH3cUMKUoPleI8JzkFVIbOv2wUNJ/W2kvsyfCsE+uEMa3nYtizMujeAz8XNf9CXsFlCtOsQs5b4/3zA==
+nsec3test.example.      0       RRSIG   CDNSKEY 13 2 0 20260101134300 20251218121300 35081 nsec3test.example. 747RPoNCQL5fU6JLbOMB7d2mfMxN1mBKfWoamQfLw6t6z2CVtlJosgF3ReNpa1v591TlBg/2oBKtnzU/nVXscQ==
+nsec3test.example.      3600    RRSIG   CAA 13 2 3600 20260104100700 20251221083700 23629 nsec3test.example. 12Y3ypk8WSqWTrmvJN61eAO3SNrtW8r/RGw73peEHG7+2Q8nVIbV7bFOrhW/9DdcRgUaw5ndam1/rbI+T7aztA==
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600 RRSIG   TXT 13 3 600 20260104100700 20251221083700 23629 nsec3test.example. hXfnjSTOQn1T/XES5LpczN9gi0dqsBk0fDtgOvfd2BtjKbpXXS5luZFkyfrLg7lupSP9EQlDX6YwUJsH67I+0w==
+delegated.and.signed.nsec3test.example. 3600    RRSIG   DS 13 5 3600 20260104100700 20251221083700 23629 nsec3test.example. ALl2q64BLxMVvNTqQSUMVt6d1DX+ywbbjW4YWWLhhtQ/sAmZXwuM9g+OguZuBeqVr2zB9gxs6a2PC0SX8EM4oA==
+with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600        RRSIG   TXT 13 10 3600 20260106163840 20251223150840 23629 nsec3test.example. 8eWcMhBdhjpZR3PBV0CUQ5fP91OMA8soUGQs2p5e9U1VaDB1qo7AVkJe8lPucisNYwKxuxFqUNsXxzrTojx9qw==
+yourweb.nsec3test.example.      6       RRSIG   AAAA 13 3 6 20260104100700 20251221083700 23629 nsec3test.example. ecMrXHLSGNSR45CoxXSMvcEsp+aBFZj0zLc9gd19S5GLmHT9QTOdM6HebEe0YA8XWkE0NQMMRWbrjjuJDG4rTw==
+;; DNSSEC NSEC3 chain
+22c3c05cb540s32qqcm7gckneoij3jnj.nsec3test.example. 600 NSEC3   1 0 0 - 297iuoulajgd2i9o099bbqahvcbquajj 
+297iuoulajgd2i9o099bbqahvcbquajj.nsec3test.example. 600 NSEC3   1 0 0 - 4q20755nlpdggon4f9jnfakh8bke91aj 
+4q20755nlpdggon4f9jnfakh8bke91aj.nsec3test.example. 600 NSEC3   1 0 0 - 4smqrtkqok7ud6f2fbpvdeo6qhkhucom 
+4smqrtkqok7ud6f2fbpvdeo6qhkhucom.nsec3test.example. 600 NSEC3   1 0 0 - 6kpn2pqlga6vtd5rljsbb66r9o043n74 NS SOA MX TXT RRSIG DNSKEY NSEC3PARAM CDS CDNSKEY CAA
+6kpn2pqlga6vtd5rljsbb66r9o043n74.nsec3test.example. 600 NSEC3   1 0 0 - 870a1mbtr3sb4h72kl9hthhnhqdn2ea0 
+870a1mbtr3sb4h72kl9hthhnhqdn2ea0.nsec3test.example. 600 NSEC3   1 0 0 - a4mr4kv4ih08fr9o15hkp90kcp5jjjq1 
+a4mr4kv4ih08fr9o15hkp90kcp5jjjq1.nsec3test.example. 600 NSEC3   1 0 0 - b2e8fvc5eobktkq353s49lc8jocj2sh0 
+b2e8fvc5eobktkq353s49lc8jocj2sh0.nsec3test.example. 600 NSEC3   1 0 0 - bgcrbscotodnee02o2g6enro9ajvp48u 
+bgcrbscotodnee02o2g6enro9ajvp48u.nsec3test.example. 600 NSEC3   1 0 0 - fodndl55qos7s564o2q87blqvqv62c7h 
+fodndl55qos7s564o2q87blqvqv62c7h.nsec3test.example. 600 NSEC3   1 0 0 - iqa2214qkhtc9peqkg7mjfng52eipa1p NS DS RRSIG
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600 NSEC3   1 0 0 - kde5di3i5628fec7od7u7mvfks8olh0b 
+kde5di3i5628fec7od7u7mvfks8olh0b.nsec3test.example. 600 NSEC3   1 0 0 - likj5oatis1ns5bsr5g2m6gc2vgl73pt AAAA RRSIG
+likj5oatis1ns5bsr5g2m6gc2vgl73pt.nsec3test.example. 600 NSEC3   1 0 0 - pe348v7okvjelb2i26ics3sr9q9l0lmp TXT RRSIG
+pe348v7okvjelb2i26ics3sr9q9l0lmp.nsec3test.example. 600 NSEC3   1 0 0 - qd72atj73bc41fr2olfj0tmt45l3s5n7 
+qd72atj73bc41fr2olfj0tmt45l3s5n7.nsec3test.example. 600 NSEC3   1 0 0 - ukf9jfgnfd2q7llpbasns3cffn1djgaq TXT RRSIG
+ukf9jfgnfd2q7llpbasns3cffn1djgaq.nsec3test.example. 600 NSEC3   1 0 0 - 22c3c05cb540s32qqcm7gckneoij3jnj NS
+;; DNSSEC NSEC3 signatures
+22c3c05cb540s32qqcm7gckneoij3jnj.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. pI3qHRGeN6AacPz9GYrg2cvhzswidsRbAEtbbeVlsVF2o+Pe2Les95qhFl4S9SvvmXrhwYFvJHrvf3WY0dpbkA==
+297iuoulajgd2i9o099bbqahvcbquajj.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. 7czL83KLqB59+i7QDmOEwpsFHTBLoaAEzpbUkyEiMVoulfC3hX9yFhl87KmOSFvnIfjVCrgyc2AQ/7YumqvzkQ==
+4q20755nlpdggon4f9jnfakh8bke91aj.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. GB81ao6oSUQNLpN+Ermp+9TdDByCaB2c9q2ON/ZqW4Vr4oNVAkCIAJICpxh44ycZCbHeGD//B20Ylv+m4E6DQQ==
+4smqrtkqok7ud6f2fbpvdeo6qhkhucom.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. 5ILhEqvkzVCEiWF5R+hU5s1HXq3b2U6cdKnTophe9eClnMtr2VHtwByS/y1Az3AZzEGe1WaV7FpTSP2EK1ImUQ==
+6kpn2pqlga6vtd5rljsbb66r9o043n74.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. 1Z+t9Hko/kfZLhtSkKuYs6jHKZAsXtEKoWwUb7ay5S/5HEROKTqG1NidXhptr1wX3KGPunlFYYz4DD01ztUQrA==
+870a1mbtr3sb4h72kl9hthhnhqdn2ea0.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. vMvXDFB4GaEGTM0PLZFh1Qb1e3SPkLgIshDgzgFV/J/Jt3tHo+9yVV/ivnuAcHnLCeIuiBSh8zbkHTgEIISIpw==
+a4mr4kv4ih08fr9o15hkp90kcp5jjjq1.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. +a9KJDJiINeopzq8ihhX4/quAYetxVzyAIq6mn+WobP9GLOTtC8diJN+Zh+LZ+3muhrBNSkNPN4HwfGDyKOBKQ==
+b2e8fvc5eobktkq353s49lc8jocj2sh0.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. 3ILbWev5QQ0Np92h2jVqb/v/9K+Bl/T+2BEYTlGfrHFTAPZeSqwY5viPzZGT+bCBmhmTbAS+L2+Rai6YVvFUyg==
+bgcrbscotodnee02o2g6enro9ajvp48u.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. dlZMTD5XyLUlxlcOKAel3cHf1nEYGRS9nAOJkRR9tcV7lb82hoTFt5GOj8NU7GhbAH/j9WFd+xr5C18plJzgOg==
+fodndl55qos7s564o2q87blqvqv62c7h.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. XdemNNdeuQD41BqP4EeY49HwhbfaDFUPDTvwJ13NyAFu4ey9nRJppMYchtHVE/4Q1Z6TIRvFtNUSYKNynO8swQ==
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. Tfd88IcPMyEreSsBORe31jnMiihp4EWiQgdXRJkhKOcgFFE2hvPji/NySC+EPSPnsLKsk4JmQdUKLwkUX5e0nA==
+kde5di3i5628fec7od7u7mvfks8olh0b.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. Sl1r3c/4BErC4VHaHLRJ0JPQ598XIjfSEinUncr36ge2asR2Ls80RaWlZ5YPF67biUVsQpQe5RfTAYH1EC6zOw==
+likj5oatis1ns5bsr5g2m6gc2vgl73pt.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. tPqTylF5Zargk5q5uNuMFk5PQ+SeKwQTkEhBwGgKdqOGsHMVlyxOqtKQSUByiZaye4/8TqX7OoODoQip5Y69kA==
+pe348v7okvjelb2i26ics3sr9q9l0lmp.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. Lpmoy3a5w6U+VcTFV9s6FYJOtQJ5oLxHc1+k8y7Hg8uvt39+m8os3+dvBtNb7/JYHIQmgog4hPWQ8IqK46rRyA==
+qd72atj73bc41fr2olfj0tmt45l3s5n7.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. DMWnodEdk7Fa84I8xR6mIuOcTJQWsJdnDB4UsnA0Ng/iQ71JzVIzFEBeNPFULZxF8mxE4jR1QB3qGGiraA8v2A==
+ukf9jfgnfd2q7llpbasns3cffn1djgaq.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260106165108 20251223152108 23629 nsec3test.example. 9KM+wqqWHd0o9tOTfIGyOXgsNRfynqA1YMimsdCVPpDs2dHNnBhbtjCTiIwhYxQuJc/ULvxa6BpanOH1QG3ELA==
+;; Written 64 records
+;; Time 2025-12-23 17:51:14 CET
+`
+
+/*
+test zone with empty non terminals
+with opt-out
+*/
+var nsec3Zone7 string = `
+;; Zone dump (Knot DNS 3.5.1)
+nsec3test.example.      3600    SOA     dns1.wisser.se. ulrich.wisser.se. 2121 86400 7200 2419200 600
+nsec3test.example.      3600    NS      ns1.example.
+nsec3test.example.      3600    NS      ns2.example.
+nsec3test.example.      3600    MX      0 .
+nsec3test.example.      3600    TXT     "v=spf1 -all"
+nsec3test.example.      3600    DNSKEY  256 3 13 39dgX5enPJNQX3x4tES3sShW2mjDVNXbZ4pEqdgzbbqSNtyy5mf/wNcRSKxkvmHAReWU2p4FJu9a3FyTl/JSiA==
+nsec3test.example.      3600    DNSKEY  257 3 13 BktpKaYvUFPi3pwq/se2IrlezuxvOsfz8O02k/KyNizVkEBaR5QNgYxYC/Xjofti8FZ0evJYAV8ZDZH8ICrVJQ==
+nsec3test.example.      600     NSEC3PARAM      1 0 0 -
+nsec3test.example.      0       CDS     35081 13 2 6645A4FFE2C180617690307A658415A53975A2E1D7535501D9251B8DBC39AFE3
+nsec3test.example.      0       CDNSKEY 257 3 13 BktpKaYvUFPi3pwq/se2IrlezuxvOsfz8O02k/KyNizVkEBaR5QNgYxYC/Xjofti8FZ0evJYAV8ZDZH8ICrVJQ==
+nsec3test.example.      3600    CAA     0 iodef "mailto:user@nsec3test.example" 
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600 TXT     "Recursive NSEC3 ???"
+delegated.and.signed.nsec3test.example. 3600    NS      ns6.example.
+delegated.and.signed.nsec3test.example. 3600    AAAA    cafe::cafe
+delegated.and.signed.nsec3test.example. 3600    DS      35081 13 2 6645A4FFE2C180617690307A658415A53975A2E1D7535501D9251B8DBC39AFE3
+with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600        TXT     "Bigger Surprise"
+longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600    NS      an.even.longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example.
+an.even.longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600    A       1.2.3.4
+yourweb.nsec3test.example.      6       AAAA    dead::beef
+;; DNSSEC signatures
+nsec3test.example.      3600    RRSIG   NS 13 2 3600 20260104100700 20251221083700 23629 nsec3test.example. RQliOYK2+RFIasvaMZN08A3hKvhnaqBVJKTTn7TSqCl0Qzcs90EV47OLF1mfOcbWZJGGjB+XO+wO/U0aW4y9AQ==
+nsec3test.example.      3600    RRSIG   SOA 13 2 3600 20260107113727 20251224100727 23629 nsec3test.example. lTqsgbggAJR5PRl9aksXaxHrflnFvN7hZkh1VXPsGDCGxKekC5d0nEMGxr9EwW9lueshLPoKcEVbBH6FGFglXw==
+nsec3test.example.      3600    RRSIG   MX 13 2 3600 20260104100700 20251221083700 23629 nsec3test.example. WPDo1Nij5/XQWnSUIDcoQKwqA/MAmdqKW5QRTFihc+WR19OgAQb84+lLPdkrKGhrZb/tzli8f/K4HEqufrOb1Q==
+nsec3test.example.      3600    RRSIG   TXT 13 2 3600 20260104100700 20251221083700 23629 nsec3test.example. /ptxgtMsl7xQoQwJEEovnEvjaU8i37xbT9g5FLnQk2+/bZI7JmgpPkkmErTKPJSlk97CbQlflfjaB7uj5wPTJg==
+nsec3test.example.      3600    RRSIG   DNSKEY 13 2 3600 20260104120700 20251221103700 35081 nsec3test.example. hHArLWjrS5wGmD2N9FU1g4pOT2jZF/c/JOvIOzeMROd2pMMwyqafQSg5xWkx/XIvtuTNsuyFYQuWmJjeQfLwIA==
+nsec3test.example.      600     RRSIG   NSEC3PARAM 13 2 600 20260104100700 20251221083700 23629 nsec3test.example. XMPbDdWVgCSEAjscLiPufNOqi+ylWU4Qui3HqYnWY6VZTApfWYP2I/G8WmzICaYXYX21TBKi/mXO2GTtNDdRqQ==
+nsec3test.example.      0       RRSIG   CDS 13 2 0 20260101134300 20251218121300 35081 nsec3test.example. bjZdNYBSH3cUMKUoPleI8JzkFVIbOv2wUNJ/W2kvsyfCsE+uEMa3nYtizMujeAz8XNf9CXsFlCtOsQs5b4/3zA==
+nsec3test.example.      0       RRSIG   CDNSKEY 13 2 0 20260101134300 20251218121300 35081 nsec3test.example. 747RPoNCQL5fU6JLbOMB7d2mfMxN1mBKfWoamQfLw6t6z2CVtlJosgF3ReNpa1v591TlBg/2oBKtnzU/nVXscQ==
+nsec3test.example.      3600    RRSIG   CAA 13 2 3600 20260104100700 20251221083700 23629 nsec3test.example. 12Y3ypk8WSqWTrmvJN61eAO3SNrtW8r/RGw73peEHG7+2Q8nVIbV7bFOrhW/9DdcRgUaw5ndam1/rbI+T7aztA==
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600 RRSIG   TXT 13 3 600 20260104100700 20251221083700 23629 nsec3test.example. hXfnjSTOQn1T/XES5LpczN9gi0dqsBk0fDtgOvfd2BtjKbpXXS5luZFkyfrLg7lupSP9EQlDX6YwUJsH67I+0w==
+delegated.and.signed.nsec3test.example. 3600    RRSIG   DS 13 5 3600 20260104100700 20251221083700 23629 nsec3test.example. ALl2q64BLxMVvNTqQSUMVt6d1DX+ywbbjW4YWWLhhtQ/sAmZXwuM9g+OguZuBeqVr2zB9gxs6a2PC0SX8EM4oA==
+with.even.more.labels.but.notall.empty.terminals.nsec3test.example. 3600        RRSIG   TXT 13 10 3600 20260106163840 20251223150840 23629 nsec3test.example. 8eWcMhBdhjpZR3PBV0CUQ5fP91OMA8soUGQs2p5e9U1VaDB1qo7AVkJe8lPucisNYwKxuxFqUNsXxzrTojx9qw==
+yourweb.nsec3test.example.      6       RRSIG   AAAA 13 3 6 20260104100700 20251221083700 23629 nsec3test.example. ecMrXHLSGNSR45CoxXSMvcEsp+aBFZj0zLc9gd19S5GLmHT9QTOdM6HebEe0YA8XWkE0NQMMRWbrjjuJDG4rTw==
+;; DNSSEC NSEC3 chain
+22c3c05cb540s32qqcm7gckneoij3jnj.nsec3test.example. 600 NSEC3   1 1 0 - 297iuoulajgd2i9o099bbqahvcbquajj                     ; signed.nsec3test.example.
+297iuoulajgd2i9o099bbqahvcbquajj.nsec3test.example. 600 NSEC3   1 1 0 - 4q20755nlpdggon4f9jnfakh8bke91aj                     ; empty.terminals.nsec3test.example.
+4q20755nlpdggon4f9jnfakh8bke91aj.nsec3test.example. 600 NSEC3   1 1 0 - 4smqrtkqok7ud6f2fbpvdeo6qhkhucom                     ; but.notall.empty.terminals.nsec3test.example.
+4smqrtkqok7ud6f2fbpvdeo6qhkhucom.nsec3test.example. 600 NSEC3   1 1 0 - 6kpn2pqlga6vtd5rljsbb66r9o043n74 NS SOA MX TXT RRSIG DNSKEY NSEC3PARAM CDS CDNSKEY CAA ; nsec3test.example.
+6kpn2pqlga6vtd5rljsbb66r9o043n74.nsec3test.example. 600 NSEC3   1 1 0 - 870a1mbtr3sb4h72kl9hthhnhqdn2ea0                     ; terminals.nsec3test.example.
+870a1mbtr3sb4h72kl9hthhnhqdn2ea0.nsec3test.example. 600 NSEC3   1 1 0 - a4mr4kv4ih08fr9o15hkp90kcp5jjjq1                     ; and.signed.nsec3test.example.
+a4mr4kv4ih08fr9o15hkp90kcp5jjjq1.nsec3test.example. 600 NSEC3   1 1 0 - b2e8fvc5eobktkq353s49lc8jocj2sh0                     ; labels.but.notall.empty.terminals.nsec3test.example.
+b2e8fvc5eobktkq353s49lc8jocj2sh0.nsec3test.example. 600 NSEC3   1 1 0 - bgcrbscotodnee02o2g6enro9ajvp48u                     ; even.more.labels.but.notall.empty.terminals.nsec3test.example.
+bgcrbscotodnee02o2g6enro9ajvp48u.nsec3test.example. 600 NSEC3   1 1 0 - fodndl55qos7s564o2q87blqvqv62c7h                     ; and.signed.nsec3test.example.
+fodndl55qos7s564o2q87blqvqv62c7h.nsec3test.example. 600 NSEC3   1 1 0 - iqa2214qkhtc9peqkg7mjfng52eipa1p NS DS RRSIG         ; delegated.and.signed.nsec3test.example.
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600 NSEC3   1 1 0 - kde5di3i5628fec7od7u7mvfks8olh0b                     ; notall.empty.terminals.nsec3test.example.
+kde5di3i5628fec7od7u7mvfks8olh0b.nsec3test.example. 600 NSEC3   1 1 0 - likj5oatis1ns5bsr5g2m6gc2vgl73pt AAAA RRSIG          ; yourweb.nsec3test.example.
+likj5oatis1ns5bsr5g2m6gc2vgl73pt.nsec3test.example. 600 NSEC3   1 1 0 - qd72atj73bc41fr2olfj0tmt45l3s5n7 TXT RRSIG           ; with.even.more.labels.but.notall.empty.terminals.nsec3test.example.
+qd72atj73bc41fr2olfj0tmt45l3s5n7.nsec3test.example. 600 NSEC3   1 1 0 - 22c3c05cb540s32qqcm7gckneoij3jnj TXT RRSIG           ; iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example.
+;;
+;; OPT OUT
+;;
+;; pe348v7okvjelb2i26ics3sr9q9l0lmp.nsec3test.example. 600 NSEC3   1 0 0 - qd72atj73bc41fr2olfj0tmt45l3s5n7                  ; name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example.
+;; ukf9jfgnfd2q7llpbasns3cffn1djgaq.nsec3test.example. 600 NSEC3   1 0 0 - 22c3c05cb540s32qqcm7gckneoij3jnj NS               ; longer.name.with.even.more.labels.but.notall.empty.terminals.nsec3test.example.
+;;
+;; DNSSEC NSEC3 signatures
+22c3c05cb540s32qqcm7gckneoij3jnj.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. XoE/tNngpdtJV7QmBwMTS3om70xCINnsagt+wCmPNOyDUO7ZhNClk8zwvJbleLAFa2fIh+DIDwwN2R3wPpdmwA==
+297iuoulajgd2i9o099bbqahvcbquajj.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. ztImhzzop1fGHSSwc5huc/A7YuFdrAGeuH8A72HOl8KkQMmE0WPqYi0XdWdlsN9cII85YsUm7f6Fk0Ntegr+2Q==
+4q20755nlpdggon4f9jnfakh8bke91aj.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. wSPZbVVdTNO57bz0+XI4C9WJbA8mjNypcrWnMZFAxIiF8jDvpvTE764LwjzavghWpGEozBrYI93ccR5b/k7cNA==
+4smqrtkqok7ud6f2fbpvdeo6qhkhucom.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. hhL6FQeBISf9hLnumwA0p/t8rd/v8+D2r4NgPcMB7HULF5HNUp6f8KqCw6vgz2Kvz8N9eZU2B02KRLYJHVIg9Q==
+6kpn2pqlga6vtd5rljsbb66r9o043n74.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. PE8UvZCKUUDbo1FC1FwGXgaDug8aYv4t7DE6uKRDOlaqMtjmNzu2LoRxEu6weKCotb2ppVYYfK+sl9iUuezAmQ==
+870a1mbtr3sb4h72kl9hthhnhqdn2ea0.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. LPpmhCCM8BXQFkHei8KRAtJEcTERNP/WDRFp7+/hk6ECyYrBdVKHfjbNYo8QfGt0DdQrldzjjRakjE0blVqn2w==
+a4mr4kv4ih08fr9o15hkp90kcp5jjjq1.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. DqO59VoPfqzhk2hDmHz0C6+QNrQLa9DJ1yfoxFHQaTK4z4LXijkxSdZCQ+KpsHLy3P0AvFR4J+Pd3N6p+vOKog==
+b2e8fvc5eobktkq353s49lc8jocj2sh0.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. ldcn5ijg+4fgth71uRt+r9fGi905vCYAatB3cdTP05TAZT3l0hztgxofUAPcU/Z3benrB83daqeAhSUccevY8Q==
+bgcrbscotodnee02o2g6enro9ajvp48u.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. ENhgZDI9TAJZ7kexGh+e/Q4xtU69wq/gCknwbRmVAR++nudd0qFboZE23vPfDKnO9s/fiCOTTKoVtavoM6zMmQ==
+fodndl55qos7s564o2q87blqvqv62c7h.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. oTSM50gh7sIr91kxY1surMG9L424JLkPdzMWQDbFpzH1H0dcUA0l2OxVm9RtIx7Fuv8E6PTTV0QIrX5omaImcA==
+iqa2214qkhtc9peqkg7mjfng52eipa1p.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. 6ETMOvtRMD4vbqgkvI962zabxz+kut1LnVRKWPyRfiwa/1IwigjgWfhTWL9oxE73sDQU3fibhI8NMgsHEUFK2w==
+kde5di3i5628fec7od7u7mvfks8olh0b.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. ofzFSNIdwP6APdt8VzTyUlGkWsN7PLs29DoUvuUraDo5luNtXZljWD9HgmnM1wrGYNLgHLbKigqL3eeRsx4NzQ==
+likj5oatis1ns5bsr5g2m6gc2vgl73pt.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. 4HhI1zX6S8jG9pWOesrmyJ6S4cN9Q45VykoqZOtFRRBxIApZmK9KcXHPR3kT8JWegoCm0CORhfRxVTAkfDN0kw==
+qd72atj73bc41fr2olfj0tmt45l3s5n7.nsec3test.example. 600 RRSIG   NSEC3 13 3 600 20260107113727 20251224100727 23629 nsec3test.example. SM5zmMDUYd3EauFltkTX9sKVvpFviWapwQgLOC8jFlx+jTJyPt8bFOrJuYtKIjAkZVII2P52npu/mR7lYveMqA==
+;; Written 60 records
+;; Time 2025-12-24 12:37:27 CET
+`
+
+func TestCheckNSEC3(t *testing.T) {
+	cases := []struct {
+		Zone             string
+		OptOutOK         bool
+		ExpectedErrors   uint32
+		ExpectedWarnings uint32
+	}{
+		{nsec3Zone0, false, 0, 0},
+		{nsec3Zone0, true, 0, 0},
+		{nsec3Zone1, false, 4, 0},
+		{nsec3Zone1, true, 4, 0},
+		{nsec3Zone2, false, 0, 6},
+		{nsec3Zone2, true, 0, 0},
+		{nsec3Zone3, false, 2, 5},
+		{nsec3Zone3, true, 2, 0},
+	}
+
+	viper.Set("verbose", 2)
+	for i, c := range cases {
+		viper.Set(NSEC3_OPTOUTOK, c.OptOutOK)
+		myReader := strings.NewReader(c.Zone)
+		origin, cache := readZonefile(myReader)
+		if r := checkNSEC3(cache, origin); r.errors != c.ExpectedErrors || r.warnings != c.ExpectedWarnings {
+			t.Logf("Test case %d: checkNSEC3 expected %d errors and %d warnings, found %d errors and %d warnings.\n.", i, c.ExpectedErrors, c.ExpectedWarnings, r.errors, r.warnings)
+			t.Fail()
+		}
+	}
+
+	// restore configuration
+	viper.Reset()
+	initConfig()
+}
+
 func TestCheckNSEC3chain(t *testing.T) {
 	cases := []struct {
 		Zone             string
@@ -251,10 +630,10 @@ func TestCheckNSEC3chain(t *testing.T) {
 		{nsec3Zone0, true, 0, 0},
 		{nsec3Zone1, false, 4, 0},
 		{nsec3Zone1, true, 4, 0},
-		{nsec3ZoneOptOut0, false, 0, 6},
-		{nsec3ZoneOptOut0, true, 0, 0},
-		{nsec3ZoneOptOut1, false, 2, 5},
-		{nsec3ZoneOptOut1, true, 2, 0},
+		{nsec3Zone2, false, 0, 6},
+		{nsec3Zone2, true, 0, 0},
+		{nsec3Zone3, false, 2, 5},
+		{nsec3Zone3, true, 2, 0},
 	}
 
 	viper.Set("verbose", 2)
@@ -273,61 +652,95 @@ func TestCheckNSEC3chain(t *testing.T) {
 	initConfig()
 }
 
-/*
-func TestCheckNSEC3labels(t *testing.T) {
-	cases := []struct {
-		Zone     string
-		Expected Result
-	}{
-		{nsec3Zone0, Result{0, 0}},
-		{nsec3Zone1, Result{1, 0}},
-		{nsec3ZoneOptOut0, Result{0, 0}},
-		{nsec3ZoneOptOut1, Result{10, 10}},
-	}
-
-	viper.Set("verbose", 1)
-	for i, c := range cases {
-		fmt.Println("TEST CASE ", i)
-		myReader := strings.NewReader(c.Zone)
-		origin, cache := readZonefile(myReader)
-
-		if r := checkNSEC3Labels(cache, origin); r != c.Expected {
-			t.Logf("Test case %d: checkNSEC3Labels expected %d errors and %d warnings, found %d errors and %d warnings.\n.", i, c.Expected.errors, c.Expected.warnings, r.errors, r.warnings)
-			t.Fail()
-		}
-	}
-
-}
-*/
-
 func TestCheckNSEC3rr(t *testing.T) {
 	cases := []struct {
-		Nsec3            *dns.NSEC3
-		ExpectedWarnings uint32
+		Zone             string
+		OptOutOK         bool
 		ExpectedErrors   uint32
+		ExpectedWarnings uint32
 	}{
-		{NewRR("test. NSEC3 1 0  0 -    2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 0, 0},
-		{NewRR("test. NSEC3 2 0  0 -    2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 0, 1},
-		{NewRR("test. NSEC3 1 1  0 -    2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 1, 0},
-		{NewRR("test. NSEC3 1 2  0 -    2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 0, 1},
-		{NewRR("test. NSEC3 1 0  1 -    2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 1, 0},
-		{NewRR("test. NSEC3 1 0 11 -    2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 0, 1},
-		{NewRR("test. NSEC3 1 0  0 AABB 2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 1, 1},
-		{NewRR("test. NSEC3 2 5 99 CCDD 2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG").(*dns.NSEC3), 2, 4},
+		{nsec3Zone0, false, 0, 0},
+		{nsec3Zone0, true, 0, 0},
+		{nsec3Zone1, false, 4, 0},
+		{nsec3Zone1, true, 4, 0},
+		{nsec3Zone2, false, 0, 6},
+		{nsec3Zone2, true, 0, 0},
+		{nsec3Zone3, false, 2, 5},
+		{nsec3Zone3, true, 2, 0},
 	}
 
-	nsec3param := NewRR("test. IN NSEC3PARAM 1 0 0 -").(*dns.NSEC3PARAM)
-
+	viper.Set("verbose", 2)
 	for i, c := range cases {
-		r := checkNSEC3rr(c.Nsec3, nsec3param)
-		if r.errors != c.ExpectedErrors {
-			t.Logf("Test case %d: checkNSEC3rr expected %d errors found %d errors.\n.", i, c.ExpectedErrors, r.errors)
-			t.Fail()
-		}
-		if r.warnings != c.ExpectedWarnings {
-			t.Logf("Test case %d: checkNSEC3rr expected %d warnings found %d warnings.\n.", i, c.ExpectedWarnings, r.warnings)
+		viper.Set(NSEC3_OPTOUTOK, c.OptOutOK)
+		myReader := strings.NewReader(c.Zone)
+		origin, cache := readZonefile(myReader)
+		if r := checkNSEC3rr(cache, origin); r.errors != c.ExpectedErrors || r.warnings != c.ExpectedWarnings {
+			t.Logf("Test case %d: checkNSEC3rr expected %d errors and %d warnings, found %d errors and %d warnings.\n.", i, c.ExpectedErrors, c.ExpectedWarnings, r.errors, r.warnings)
 			t.Fail()
 		}
 	}
 
+	// restore configuration
+	viper.Reset()
+	initConfig()
+}
+
+func TestCheckNSEC3labels(t *testing.T) {
+	cases := []struct {
+		Zone             string
+		OptOutOK         bool
+		ExpectedErrors   uint32
+		ExpectedWarnings uint32
+	}{
+		{nsec3Zone6, false, 0, 0},
+		{nsec3Zone6, true, 0, 0},
+		{nsec3Zone7, false, 1, 0},
+		{nsec3Zone7, true, 0, 0},
+	}
+
+	viper.Set("verbose", 0)
+	initConfig()
+	for i, c := range cases {
+		viper.Set(NSEC3_OPTOUTOK, c.OptOutOK)
+		myReader := strings.NewReader(c.Zone)
+		origin, cache := readZonefile(myReader)
+		if r := checkNSEC3Labels(cache, origin); r.errors != c.ExpectedErrors || r.warnings != c.ExpectedWarnings {
+			t.Logf("Test case %d: checkNSEC3rr expected %d errors and %d warnings, found %d errors and %d warnings.\n.", i, c.ExpectedErrors, c.ExpectedWarnings, r.errors, r.warnings)
+			t.Fail()
+		}
+	}
+
+	// restore configuration
+	viper.Reset()
+	initConfig()
+}
+
+func TestCheckNSEC3TypeBitmap(t *testing.T) {
+	cases := []struct {
+		Zone             string
+		OptOutOK         bool
+		ExpectedErrors   uint32
+		ExpectedWarnings uint32
+	}{
+		{nsec3Zone4, false, 0, 0},
+		{nsec3Zone4, true, 0, 0},
+		{nsec3Zone5, false, 4, 0},
+		{nsec3Zone5, true, 4, 0},
+	}
+
+	viper.Set("verbose", 4)
+	initConfig()
+	for i, c := range cases {
+		viper.Set(NSEC3_OPTOUTOK, true)
+		myReader := strings.NewReader(c.Zone)
+		origin, cache := readZonefile(myReader)
+		if r := checkNSEC3TypeBitmap(cache, origin); r.errors != c.ExpectedErrors || r.warnings != c.ExpectedWarnings {
+			t.Logf("Test case %d: checkNSEC3TypeBitmap expected %d errors and %d warnings, found %d errors and %d warnings.\n.", i, c.ExpectedErrors, c.ExpectedWarnings, r.errors, r.warnings)
+			t.Fail()
+		}
+	}
+
+	// restore configuration
+	viper.Reset()
+	initConfig()
 }

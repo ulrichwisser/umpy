@@ -155,10 +155,10 @@ Configuration: see Allowed Algorithms
 
 ### DNSKEY
 
-- checks for existence of DNSKEY records at the apex (level error)
-- checks that keys of the same algorithm do not have the same keyTag (level warning)
-- checks that at least one key of each algorithm in the DNSKEY set has the SEP flag set (level warning)
-- checks  that all DNSKEY records use an allowed algorithm (level warning)
+- checks for existence of DNSKEY records at the apex 
+- checks that keys of the same algorithm do not have the same keyTag
+- checks that at least one key of each algorithm in the DNSKEY set has the SEP flag set
+- checks that all DNSKEY records use an allowed algorithm 
 - checks that all keys with SEP flag set sign the DNSKEY set
 
 Configuration: see Allowed Algorithms
@@ -175,16 +175,18 @@ Configuration: see Allowed Algorithms and Allowed Digest Types
 
 The command line argument --nsec can force umpy to run this test
 
-- check that all NSEC records are chained together in one loop, in correct order
+- checks that all NSEC records are chained together in one loop, in correct order
 - checks that all labels that should have a NSEC record really have one
 - checks that all labels that should have a NSEC record have exactly one
+- checks that all types in bitmap exist for a label
+- checks that all types for a label that exist are covered by NSEC
 
 ### NSEC3
 
 - checks that all NSEC3 records are linked in one loop in the right order
-- checks all NSEC3 records against recommendations in [RFC 9276](https://datatracker.ietf.org/doc/html/rfc9276)
 - check all NSEC3 records use parameters from NSEC3PARAM
-- check all NSEC3 records use same salt as NSEC3PARAM
+- checks that all types in bitmap exist for a label
+- checks that all types for a label that exist are covered by bitmap
 
 - TODO: check that all needed NSEC3 records are in the zone
 - TODO: check that all NSEC3 records in the zone are allowed
@@ -201,9 +203,11 @@ For configuration see section NSEC3 Configuration
 ### RRSIG
 
 - checks that delegated labels are not signed (except DS, NSEC, NSEC3)
+- checks that glue is not signed
 - checks that not delegated labels are signed (all RR types)
 - checks RRSIG inception and expiration timestamp
 - checks that all RRSIG records are valid signatures
+
 
 The timing checks start with the current time. This can be overridden with the
 command line argument `--now`.

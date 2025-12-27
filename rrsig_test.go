@@ -114,7 +114,7 @@ func bool2errors(b bool) string {
 	return "errors"
 }
 
-func TestCheckSig(t *testing.T) {
+func TestCheckRrsigSig(t *testing.T) {
 	cases := []struct {
 		Keys   []dns.RR
 		Rrset  []dns.RR
@@ -193,11 +193,11 @@ a.ns.test.	300	IN	NSEC	glue.example. A AAAA RRSIG NSEC
 a.ns.test.	300	IN	RRSIG	NSEC 13 3 300 20220130235959 20220101000000 11082 test. 9iUKFGymVkoYvryeifIi+ATcz2Gk/PcpXHWkUX1qM4ebPbwwOF+yMFYVxvMNtDHNu6+xmRieTikcu9MMYseJjQ==
 `
 
-func TestCheckSignatures(t *testing.T) {
+func TestCheckRrsigSignatures(t *testing.T) {
 	myReader := strings.NewReader(checkRRSIGzone)
 	origin, cache := readZonefile(myReader)
 
-	expected := Result{5, 0}
+	expected := Result{6, 0}
 	viper.Set("now", "2022-01-04T12:00:00Z")
 	if r := checkRRSIG(cache, origin); r != expected {
 		t.Logf("checkSignatures expected  %d errors and %d warnings, found %d errors and %d warnings.\n.", expected.errors, expected.warnings, r.errors, r.warnings)
@@ -212,7 +212,7 @@ func TestCheckSignatures(t *testing.T) {
 	}
 
 	viper.Set("now", nil)
-	expected = Result{39, 0}
+	expected = Result{40, 0}
 	if r := checkRRSIG(cache, origin); r != expected {
 		t.Logf("checkSignatures expected  %d errors and %d warnings, found %d errors and %d warnings.\n.", expected.errors, expected.warnings, r.errors, r.warnings)
 		t.Fail()

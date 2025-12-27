@@ -277,7 +277,7 @@ func run(args []string) {
 
 	// NSEC
 	if viper.GetBool(CHECK_NSEC) {
-		go RunTest("NSEC", cache, origin, checkNSEC, &wg, results)
+		go RunTest("NSEC", cache, origin, checkNsec, &wg, results)
 		wg.Add(1)
 	}
 

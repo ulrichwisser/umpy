@@ -153,15 +153,15 @@ func TestCheckNsec(t *testing.T) {
 		Zone string
 		Result
 	}{
-		{nsecZone0, Result{0, 0}},
-		{nsecZone1, Result{5, 0}},
-		{nsecZone2, Result{6, 0}},
+		{nsecZone0, Result{1, 0}},
+		{nsecZone1, Result{6, 0}},
+		{nsecZone2, Result{14, 0}},
 	}
 
 	for i, c := range cases {
 		myReader := strings.NewReader(c.Zone)
 		origin, cache := readZonefile(myReader)
-		if r := checkNSEC(cache, origin); r != c.Result {
+		if r := checkNsec(cache, origin); r != c.Result {
 			t.Logf("Test case %d: checkNSEC expected %d errors and %d warnings, found %d errors and %d warnings.\n.", i, c.errors, c.warnings, r.errors, r.warnings)
 			t.Fail()
 		}
@@ -188,6 +188,9 @@ func TestCheckNsecChain(t *testing.T) {
 		}
 	}
 
+	// restore configuration
+	viper.Reset()
+	initConfig()
 }
 
 func TestCheckNsecNoAdditional(t *testing.T) {
@@ -196,18 +199,24 @@ func TestCheckNsecNoAdditional(t *testing.T) {
 		Result
 	}{
 		{nsecZone0, Result{0, 0}},
-		{nsecZone1, Result{2, 0}},
-		{nsecZone2, Result{3, 0}},
+		{nsecZone1, Result{1, 0}},
+		{nsecZone2, Result{2, 0}},
 	}
+
+	viper.Set("verbose", 4)
 
 	for i, c := range cases {
 		myReader := strings.NewReader(c.Zone)
 		origin, cache := readZonefile(myReader)
-		if r := checkNoAdditionalNsec(cache, origin); r != c.Result {
-			t.Logf("Test case %d: checkNoAdditionalNsec expected %d errors and %d warnings, found %d errors and %d warnings.\n.", i, c.errors, c.warnings, r.errors, r.warnings)
+		if r := checkNsecNoAdditional(cache, origin); r != c.Result {
+			t.Logf("Test case %d: checkNsecNoAdditional expected %d errors and %d warnings, found %d errors and %d warnings.\n.", i, c.errors, c.warnings, r.errors, r.warnings)
 			t.Fail()
 		}
 	}
+
+	// restore configuration
+	viper.Reset()
+	initConfig()
 
 }
 
@@ -218,7 +227,7 @@ func TestCheckNsecTypeBitmap(t *testing.T) {
 	}{
 		//{nsecZone0, Result{0, 0}},
 		//{nsecZone1, Result{2, 0}},
-		{nsecZone2, Result{3, 0}},
+		{nsecZone2, Result{9, 0}},
 	}
 
 	viper.Set("verbose", 4)
@@ -231,5 +240,9 @@ func TestCheckNsecTypeBitmap(t *testing.T) {
 			t.Fail()
 		}
 	}
+
+	// restore configuration
+	viper.Reset()
+	initConfig()
 
 }

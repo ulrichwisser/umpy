@@ -5,9 +5,9 @@ import (
 	"github.com/miekg/dns"
 )
 
-func checkNSEC(cache Cache, origin string) (r Result) {
+func checkNsec(cache Cache, origin string) (r Result) {
 	r.Add(checkNsecChain(cache, origin))
-	r.Add(checkNoAdditionalNsec(cache, origin))
+	r.Add(checkNsecNoAdditional(cache, origin))
 	r.Add(checkNsecTypeBitmap(cache, origin))
 	return
 }
@@ -40,14 +40,12 @@ func checkNsecChain(cache Cache, origin string) (r Result) {
 }
 
 // 	We try to find labels with nsec records that shouldn't have one
-func checkNoAdditionalNsec(cache Cache, origin string) (r Result) {
+func checkNsecNoAdditional(cache Cache, origin string) (r Result) {
 	/*
 		getNsecLabels and getLabels both return a sorted label list.
 	*/
 	nseclabels := getNsecLabels(cache, origin)
-	log.Debugf("NSEC label: %v", nseclabels)
     labels := getLabels(cache)
-	log.Debugf("Labels: %v", labels)
 
 	var shouldHaveNsec map[string]bool = make(map[string]bool, 0)
 	for _,label := range nseclabels {
@@ -56,13 +54,27 @@ func checkNoAdditionalNsec(cache Cache, origin string) (r Result) {
 
 	for _,label := range labels {
 		if _, ok := cache[label]["NSEC"]; ok {
-			if _,ok:=shouldHaveNsec[label]; ok {
-				log.Debugf("Label %s has NSEC record (as expected)", label)
+			// has NSEC label
+			if !shouldHaveNsec[label] {
+				log.Errorf("Label %s should not have a NSEC record", label)
+				r.errors += 1
+				continue
 			}
-			log.Errorf("Label %s should not have a NSEC record", label)
-			r.errors += 1
+			// has NSEC record as expected
+			log.Debugf("Label %s has NSEC record (as expected)", label)
 			continue
-		} 
+		} else {
+			// has no NSEC label
+			if shouldHaveNsec[label] {
+				log.Errorf("Label %s should have a NSEC record, but doesn't", label)
+				r.errors += 1
+				continue
+			}
+			// has no NSEC record as expected
+			log.Debugf("Label %s has no NSEC record (as expected)", label)
+			continue
+
+		}
 	}
 	return
 }

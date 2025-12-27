@@ -20,7 +20,7 @@ NSEC3 should ***NEVER*** have been invented. What a mess!!!
 2. CheckNSEC3rr checks if a NSEC3 record follows RFC 9276
 3. Check all records use parameters from NSEC3PARAM
 4. Check if all records that must have a NSEC3 record have one
-5. Check that all NSEC3 records actually have a parent record
+5. Check that all NSEC3 records should be in zone
 
 */
 
@@ -61,7 +61,7 @@ func checkNSEC3chain(cache Cache, origin string) (r Result) {
 		nsec3 := cache[nsec3labels[i]]["NSEC3"][0].(*dns.NSEC3)
 
 		// check chain
-		if nsec3.NextDomain+"."+origin != nsec3labels[nextindex] {
+		if dns.CanonicalName(nsec3.NextDomain+"."+origin) != nsec3labels[nextindex] {
 			log.Errorf("NSEC3 record for label %s has %s as next domain. expected %s", nsec3labels[i], nsec3.NextDomain, nsec3labels[nextindex])
 			r.errors++
 		}
@@ -353,53 +353,117 @@ func checkNSEC3Labels(cache Cache, origin string) (r Result) {
 		Not needed for our purposes
 	*/
 
+
 	/*
+		Remove opt-out NSEC3 RR from the list
+	*/
+	log.Debug("Remove OPTOUT NSEC3 records")
+	for label := range nsec3entities {
+		log.Debugf("Checking OPTPUT for NSEC3 record %s (original owner %s)", label, nsec3entities[label][0].originalowner)
+		if _,ok:=cache[label]; ok {
+			log.Debugf("Leave: Label %s has NSEC3 record", label)
+			continue
+		}
+		// NSEC3 record is missing
+		// this is ok if
+		// - originalowner is an insecure delegation
+		// - enclosing nsec3 record has the optout flag set
+		if !isDelegated(nsec3entities[label][0].originalowner, cache, origin) {
+			log.Debugf("Leave: original owner %s is not delegated", nsec3entities[label][0].originalowner)
+			continue
+		}
+		nsec3, err := getClosestEncloser(cache, origin, nsec3entities[label][0].originalowner)
+		if err != nil {
+			log.Fatalf("Could not get closest encloser of %s (original owner %s)", label, nsec3entities[label][0].originalowner)
+		}
+		if _,ok := nsec3entities[dns.CanonicalName(nsec3.Header().Name)]; !ok {
+			log.Fatalf("Closest encloser %s does not have NSEC3 record", nsec3.Header().Name)
+		}
+		log.Debugf("Closes Encloser is %s (original owner %s)", nsec3.Header().Name, nsec3entities[dns.CanonicalName(nsec3.Header().Name)][0].originalowner)
+		log.Debugf("Flags is %d (error if not 1=optout)", nsec3.Flags)
+		if nsec3.Flags&1!=1 {
+			// Should be there
+			log.Debugf("Leave: Closes enclosser is not opt-out")
+			continue
+		}
+		// closest encloser found and optout flag is set
+		log.Debugf("NSEC3 record %s (original owner %s) is not needed", label, nsec3entities[label][0].originalowner)
+		delete(nsec3entities, label)
+		continue
+	}
+
+	/*
+		Apparently not all NSEC3 records produced by above algorithm are really needed.
+
+		If there is a long name with empty non terminals, that chain can be cut
+		at the longest entry with a non empty TypeBitMap
+
+	*/
+
+	// Make a list of all NSEC3 records order by original owner length
+	type labelentry struct {
+		hash string 
+		originalowner string
+	}
+
+	labels := make([]labelentry, 0, len(nsec3entities))
+    for _,entity := range nsec3entities {
+       	labels = append(labels, labelentry{hash: entity[0].hash, originalowner: entity[0].originalowner})
+	}
+    sort.Slice(labels, func(i, j int) bool {
+		ii := len(dns.SplitDomainName(labels[i].originalowner))
+		jj := len(dns.SplitDomainName(labels[j].originalowner))
+		if ii == jj {
+            return labels[i].originalowner > labels[j].originalowner // optional, deterministic tie-break
+        }
+        return ii > jj // longest first
+    })	
+	log.Debugf("Sorted labels: %v", labels)
+
+	for i := range labels {
+		log.Debugf("Checking %d %s %s", i, labels[i].hash, labels[i].originalowner)
+		entry := nsec3entities[labels[i].hash][0]
+		if len(entry.types) > 0  {
+			log.Debugf("TypeBitMap not empty.")
+			continue
+		}
+	
+		// TypeBitMap is empty, check if a longer name exists
+		var longerNameFound bool = false
+		for _,r := range nsec3entities {
+			if r[0].originalowner != entry.originalowner && strings.HasSuffix(r[0].originalowner, entry.originalowner) {
+				longerNameFound = true
+				break
+			}
+		}
+		if longerNameFound {
+			// Needs to be there
+			log.Debugf("Longer name found")
+			continue
+		}
+		// No longer name found, can be deleted
+		log.Debugf("NSEC3 entry %s (original owner %s) with empty TypeBitMap has no children. It will be removed", entry.hash, entry.originalowner)
+		delete(nsec3entities, entry.hash)
+	}
+
+    /*
 	- Check that all needed NSEC3 RR exist
     - Check that no ther NSEC3 RR exist
 	*/
 	log.Debug("Start checking zone")
 	for label := range nsec3entities {
+		log.Debugf("Checking NSEC3 record %s (original owner %s)", label, nsec3entities[label][0].originalowner)
 		if _,ok:=cache[label]; !ok {
-			log.Debugf("Checking OPTPUT for NSEC3 record %s (original owner %s)", label, nsec3entities[label][0].originalowner)
-			// NSEC3 record is missing
-			// this is ok if
-			// - originalowner is an insecure delegation
-            // - enclosing nsec3 record has the optout flag set
-			if !isDelegated(nsec3entities[label][0].originalowner, cache, origin) {
-				log.Debugf("origianlowner %s is not delegated", nsec3entities[label][0].originalowner)
-				log.Errorf("NSEC3 record missing %s (original owner %s)", label, nsec3entities[label][0].originalowner)
-				r.errors++
-				continue
-			}
-			nsec3, err := getClosestEncloser(cache, origin, nsec3entities[label][0].originalowner)
-			if err != nil {
-				log.Fatalf("Could not get closest encloser of %s (original owner %s)", label, nsec3entities[label][0].originalowner)
-			}
-			log.Debugf("Closes Encloser is %s (original owner %s)", nsec3.Header().Name, nsec3entities[nsec3.Header().Name][0].originalowner)
-			log.Debugf("Flags is %d (error if not 1=optout)", nsec3.Flags)
-			if nsec3.Flags&1!=1 {
-				log.Errorf("NSEC3 record missing %s (original owner %s)", label, nsec3entities[label][0].originalowner)
-				r.errors++
-				continue
-			}
-			// closest encloser found and optout flag is set
-			continue
-		}
-		if _,ok:=cache[label]["NSEC3"]; !ok {
-			log.Fatalf("NSEC3 should exist for label %s (original owner %s)", label, nsec3entities[label][0].originalowner)
+			log.Errorf("NSEC3 record missing %s (original owner %s)", label, nsec3entities[label][0].originalowner)
 			r.errors++
 			continue
 		}
-		log.Debugf("NSEC3 is found at: %s (original owner: %s)", label, nsec3entities[label][0].originalowner)		
 	}
 	for label := range cache {
 		// We are looking for NSEC3 records
 		if _,ok:=cache[label]["NSEC3"]; !ok {
 			continue
 		}
-		// 
-		// 		labels := dns.SplitDomainName(label)
-
 		if _,ok:=nsec3entities[label]; !ok {
 			log.Errorf("Found NSEC3 record at %s, but it should not be there.", label)
 			r.errors++
@@ -430,8 +494,12 @@ func getClosestEncloser(cache Cache, origin string, originalowner string) (nsec3
 			if _,ok := cache[lh]["NSEC3"]; !ok {
 				continue
 			}
-			log.Debugf("Found closes encloser of %s at %s (original owner %s)", originalowner, lh, l)
-			return cache[lh]["NSEC3"][0].(*dns.NSEC3), nil
+			log.Debugf("Candidate closes encloser of %s at %s (original owner %s)", originalowner, lh, l)
+			nsec3 := cache[lh]["NSEC3"][0].(*dns.NSEC3)
+			log.Debugf("Len typebitmap: %d", len(nsec3.TypeBitMap))
+			if len(nsec3.TypeBitMap)>0 {
+				return nsec3, nil
+			}
 		}
 	return nil, errors.New("No closest encloser found")
 }

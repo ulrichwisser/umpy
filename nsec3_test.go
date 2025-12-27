@@ -205,7 +205,7 @@ test.			600	IN	DNSKEY	257 3 13 t2LVP+yZIiE9JPorgUdZNesR9fYl+715hSjItwxqzxgdH4ApB
 test.			600	IN	RRSIG	DNSKEY 13 1 600 20220501121558 20220401121558 32290 test. XcSKetL7GNkTyMWD7Vw1iXzpsGGeAGaW4yVbM1Xwv7Q8WZFIE3fy5pLq27pReBCkwW9+vFEKP/n4wcy0Tx7okw==
 test.			300	IN	NSEC3PARAM	1 0 0 -
 test.			300	IN	RRSIG	NSEC3PARAM 13 1 300 20220501121558 20220401121558 11082 test. NDzgTb1/vs/KgG/Ykv76B2xbzUxZw6HCGaxAPGKwn92n7WguJhcoK7pLGwT80PlXGA6skTn17tp7ZHHNLvTdKA==
-1F7C69DK1QN74JDN4H39DPKQ2R9Q6F2B.test.	14400	IN	NSEC3	1 1 0 - 3Q3GTHSM77SIA151QI4I157DLE08VJOI TXT RRSIG ; domain4.test.
+1F7C69DK1QN74JDN4H39DPKQ2R9Q6F2B.test.	14400	IN	NSEC3	2 1 0 - 3Q3GTHSM77SIA151QI4I157DLE08VJOI TXT RRSIG ; domain4.test.
 1F7C69DK1QN74JDN4H39DPKQ2R9Q6F2B.test.	14400	IN	RRSIG	NSEC3 13 2 14400 20220501121558 20220401121558 11082 test. 7X5siSZyN9Q2Nu28w5ZXtsLf7gf/rVB8Kaymzwz4X3fvgbFELe4UAYMQpONE+XM+UHJpakfLDzorXdkF3/mtzQ==
 5U2I2H5CO0EBB4R9HIPBKU7PEA6GGPSV.test.	14400	IN	NSEC3	1 1 0 - FJ6TVCIL6NJKNSNGSJD7IT4C3TOPDS19 NS SOA RRSIG DNSKEY NSEC3PARAM ; test.
 5U2I2H5CO0EBB4R9HIPBKU7PEA6GGPSV.test.	14400	IN	RRSIG	NSEC3 13 2 14400 20220501121558 20220401121558 11082 test. Zd4QK8XjgvQLhnPbaDLr5TmC0w+Z57IwvBg/3WG6wcVh1koBsVviXWzG3myeoIhu+dY0E5ElhZcUd++f/KhZNw==
@@ -221,9 +221,9 @@ domain3.test.		300	IN	A	4.5.6.7
 ns.domain3.test.	300	IN	AAAA	dead:0:0:0:0:0:0:beef
 domain4.test.		300	IN	TXT	"blahhblahhblahh"
 domain4.test.		300	IN	RRSIG	TXT 13 2 300 20220501121558 20220401121558 11082 test. nuJ1MD6DhC0883Tl3pCjr/6hZGtRFmVTCiafNZQC0PD8Ya8lqA6Dx2yCW5RU6WBMkU8O89SK9swrrAXEaJG/LQ==
-FJ6TVCIL6NJKNSNGSJD7IT4C3TOPDS19.test.	14400	IN	NSEC3	1 1 0 - LJKPGIFJS9K7DN5L5LMFPLHTBOGTN76O A AAAA RRSIG ; ns.test.
+FJ6TVCIL6NJKNSNGSJD7IT4C3TOPDS19.test.	14400	IN	NSEC3	1 1 2 - LJKPGIFJS9K7DN5L5LMFPLHTBOGTN76O A AAAA RRSIG ; ns.test.
 FJ6TVCIL6NJKNSNGSJD7IT4C3TOPDS19.test.	14400	IN	RRSIG	NSEC3 13 2 14400 20220501121558 20220401121558 11082 test. Fe99Gk1Cv378i7YGT91I2K8ovPIPrIRZ/gB4sR2XPp2KbteVzZ8WtTzMiJJjSTcKsqzaBZ8YsfUbkJqoY+wTpA==
-GLF8EI9MSLNHUED8AQ8H7IF8722H27LT.test.	14400	IN	NSEC3	1 1 0 - LJKPGIFJS9K7DN5L5LMFPLHTBOGTN76O NS DS RRSIG ; domain.test.
+GLF8EI9MSLNHUED8AQ8H7IF8722H27LT.test.	14400	IN	NSEC3	1 100 0 - LJKPGIFJS9K7DN5L5LMFPLHTBOGTN76O NS DS RRSIG ; domain.test.
 GLF8EI9MSLNHUED8AQ8H7IF8722H27LT.test.	14400	IN	RRSIG	NSEC3 13 2 14400 20220501121558 20220401121558 11082 test. PGzYonGqnvOEmB5lJGz4SbdLszsTZ6eLQm4/jR3dQXsuiwivkEH/iaYsl2ecY/J8GeVGJrIrmWbeTKGKS0CXAA==
 LJKPGIFJS9K7DN5L5LMFPLHTBOGTN76O.test.	14400	IN	NSEC3	1 1 0 - P8MH4V9JNCF7I98LKRPB81N79DHOQL5K A AAAA RRSIG ; a.ns.test.
 LJKPGIFJS9K7DN5L5LMFPLHTBOGTN76O.test.	14400	IN	RRSIG	NSEC3 13 2 14400 20220501121558 20220401121558 11082 test. U6hdh9ir9Z002/axEeRYiaFZHC066vYYMCFboYwTbXfl3zfXxCHl7OsPYU4P9pNZKiNj1ZzG+6Ps+8vXfKjXLw==
@@ -595,12 +595,20 @@ func TestCheckNSEC3(t *testing.T) {
 	}{
 		{nsec3Zone0, false, 0, 0},
 		{nsec3Zone0, true, 0, 0},
-		{nsec3Zone1, false, 4, 0},
-		{nsec3Zone1, true, 4, 0},
+		{nsec3Zone1, false, 6, 0},
+		{nsec3Zone1, true, 6, 0},
 		{nsec3Zone2, false, 0, 6},
 		{nsec3Zone2, true, 0, 0},
-		{nsec3Zone3, false, 2, 5},
-		{nsec3Zone3, true, 2, 0},
+		{nsec3Zone3, false, 6, 4},
+		{nsec3Zone3, true, 6, 0},
+		{nsec3Zone4, false, 0, 0},
+		{nsec3Zone4, true, 0, 0},
+		{nsec3Zone5, false, 0, 27},
+		{nsec3Zone5, true, 0, 0},
+		{nsec3Zone6, false, 0, 0},
+		{nsec3Zone6, true, 0, 0},
+		{nsec3Zone7, false, 0, 14},
+		{nsec3Zone7, true, 0, 0},
 	}
 
 	viper.Set("verbose", 2)
@@ -630,9 +638,9 @@ func TestCheckNSEC3chain(t *testing.T) {
 		{nsec3Zone0, true, 0, 0},
 		{nsec3Zone1, false, 4, 0},
 		{nsec3Zone1, true, 4, 0},
-		{nsec3Zone2, false, 0, 6},
+		{nsec3Zone2, false, 0, 0},
 		{nsec3Zone2, true, 0, 0},
-		{nsec3Zone3, false, 2, 5},
+		{nsec3Zone3, false, 2, 0},
 		{nsec3Zone3, true, 2, 0},
 	}
 
@@ -661,12 +669,12 @@ func TestCheckNSEC3rr(t *testing.T) {
 	}{
 		{nsec3Zone0, false, 0, 0},
 		{nsec3Zone0, true, 0, 0},
-		{nsec3Zone1, false, 4, 0},
-		{nsec3Zone1, true, 4, 0},
+		{nsec3Zone1, false, 0, 0},
+		{nsec3Zone1, true, 0, 0},
 		{nsec3Zone2, false, 0, 6},
 		{nsec3Zone2, true, 0, 0},
-		{nsec3Zone3, false, 2, 5},
-		{nsec3Zone3, true, 2, 0},
+		{nsec3Zone3, false, 3, 4},
+		{nsec3Zone3, true, 3, 0},
 	}
 
 	viper.Set("verbose", 2)
@@ -694,11 +702,11 @@ func TestCheckNSEC3labels(t *testing.T) {
 	}{
 		{nsec3Zone6, false, 0, 0},
 		{nsec3Zone6, true, 0, 0},
-		{nsec3Zone7, false, 1, 0},
+		{nsec3Zone7, false, 0, 0},
 		{nsec3Zone7, true, 0, 0},
 	}
 
-	viper.Set("verbose", 0)
+	viper.Set("verbose", 4)
 	initConfig()
 	for i, c := range cases {
 		viper.Set(NSEC3_OPTOUTOK, c.OptOutOK)
@@ -722,10 +730,10 @@ func TestCheckNSEC3TypeBitmap(t *testing.T) {
 		ExpectedErrors   uint32
 		ExpectedWarnings uint32
 	}{
-		{nsec3Zone4, false, 0, 0},
-		{nsec3Zone4, true, 0, 0},
-		{nsec3Zone5, false, 4, 0},
-		{nsec3Zone5, true, 4, 0},
+		{nsec3Zone4, false, 1, 0},
+		{nsec3Zone4, true, 1, 0},
+		{nsec3Zone5, false, 2, 0},
+		{nsec3Zone5, true, 2, 0},
 	}
 
 	viper.Set("verbose", 4)

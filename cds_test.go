@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 	"github.com/apex/log"
+	"github.com/spf13/viper"
 )
 
 var cdsZoneString0 string = `
@@ -95,7 +96,6 @@ var cdsZoneStringC string = `
 ;
 test-cds.example.	600	IN	SOA	test.example. mail.example. 1410271268 7200 3600 1209600 600
 test-cds.example.	600	IN	RRSIG	SOA 8 2 600 20300101000000 20230101000000 47084 test-cds.example. BknpyiBfW6eVq+YJfGOJS46WT3UYnWvQqZ8IG8cJe0cvUuJdaip9rqyYupETAHNOBh0qTh72PhmDwrsmdmetIg==
-;
 test-cds.example.	600	IN	DNSKEY	256 3 8 AwEAAZtOaEH3qOAlEVzzWrmISpCNpg80NofRWBjoaCEZ7AYuK+Z2hleMQtpoa2Xal3eRYYZFGWxjrDCGTAMJ1YmRHMM= ;{id = 38170 (zsk), size = 512b}
 test-cds.example.	600	IN	DNSKEY	256 3 13 RrtlPxwfrEv+EivQ2pjyjVJBO5yWowGnhFj477OWIPBJIg0MOwt7fJBhnFI/nAcYaAGnf+7hubX8EYwOnQlZ2w== ;{id = 40624 (zsk), size = 256b}
 test-cds.example.	600	IN	DNSKEY	257 3 8 AwEAAceRxZ3KZQ61DK/+a77ibs1UWS2bJDQ2btkTsmPEVf4thv695D/vwYuQFfRBNerBChA8RxRSyAbLXEShxBP1Yq0= ;{id = 47084 (ksk), size = 512b}
@@ -253,7 +253,7 @@ func TestCheckCDS(t *testing.T) {
 	}{
 		{cdsZoneStringA, Result{2, 0}},
 		{cdsZoneStringB, Result{0, 1}},
-		{cdsZoneStringC, Result{0, 1}},
+		{cdsZoneStringC, Result{1, 1}},
 		{cdsZoneStringD, Result{0, 2}},
 		{cdsZoneStringE, Result{0, 2}},
 		{cdsZoneStringF, Result{0, 3}},
@@ -331,12 +331,14 @@ func TestCheckCDSsignsDNSKEY(t *testing.T) {
 		Result
 	}{
 		{cdsZoneStringB, Result{0, 1}},
-		{cdsZoneStringC, Result{0, 1}},
+		{cdsZoneStringC, Result{1, 1}},
 		{cdsZoneStringD, Result{0, 1}},
 		{cdsZoneStringE, Result{0, 1}},
 		{cdsZoneStringF, Result{0, 3}},
 		{cdsZoneStringG, Result{1, 1}},
 	}
+
+	viper.Set("verbose", 4)
 
 	for i, c := range cases {
 		myReader := strings.NewReader(c.Zone)
@@ -349,4 +351,8 @@ func TestCheckCDSsignsDNSKEY(t *testing.T) {
 			t.Fail()
 		}
 	}
+
+	// restore configuration
+	viper.Reset()
+	initConfig()
 }

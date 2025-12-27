@@ -44,11 +44,13 @@ func checkCDSsignsDNSKEY(cache Cache, origin string) (r Result) {
 	keysfound := 0
 	for _, rr := range cache[origin]["CDS"] {
 		cds := rr.(*dns.CDS)
+		log.Debugf("CDS alg %d keytag %d", cds.Algorithm, cds.KeyTag)
 		found := false
 		valid := false
 		for _, key := range cache[origin]["DNSKEY"] {
 			if cds.String() == key.(*dns.DNSKEY).ToDS(cds.DigestType).ToCDS().String() {
 				found = true
+				log.Debugf("Found key alg %d keytag %d", key.(*dns.DNSKEY).Algorithm, key.(*dns.DNSKEY).KeyTag())
 				if key.(*dns.DNSKEY).Flags&dns.SEP != dns.SEP {
 					log.Warnf("CDS record with alg=%d and keyTag=%d, refers to DNSKEY that does not have the SEP flag set.", cds.Algorithm, cds.KeyTag)
 					r.warnings++
@@ -68,6 +70,7 @@ func checkCDSsignsDNSKEY(cache Cache, origin string) (r Result) {
 		}
 		if found {
 			if valid {
+				log.Debugf("CDS record with alg=%d and keyTag=%d, refers to DNSKEY that does sign the DNSKEY RR set.", cds.Algorithm, cds.KeyTag)
 				keysfound++
 			} else {
 				log.Infof("CDS record with alg=%d and keyTag=%d, refers to DNSKEY that does not sign the DNSKEY RR set.", cds.Algorithm, cds.KeyTag)

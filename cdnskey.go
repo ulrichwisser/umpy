@@ -48,7 +48,9 @@ func checkCDNSKEYsignsDNSKEY(cache Cache, origin string) (r Result) {
 		found := false
 		valid := false
 		for _, key := range cache[origin]["DNSKEY"] {
-			if cdnskey == key.(*dns.DNSKEY).ToCDNSKEY() {
+			keycdnskey := key.(*dns.DNSKEY).ToCDNSKEY()
+			keycdnskey.Header().Ttl = cdnskey.Header().Ttl
+			if cdnskey.String() == keycdnskey.String() {
 				found = true
 				if key.(*dns.DNSKEY).Flags&dns.SEP != dns.SEP {
 					log.Warnf("CDNSKEY record with alg=%d and keyTag=%d, refers to DNSKEY that does not have the SEP flag set.", cdnskey.Algorithm, cdnskey.KeyTag())

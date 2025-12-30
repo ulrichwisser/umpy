@@ -48,7 +48,9 @@ func checkCDSsignsDNSKEY(cache Cache, origin string) (r Result) {
 		found := false
 		valid := false
 		for _, key := range cache[origin]["DNSKEY"] {
-			if cds.String() == key.(*dns.DNSKEY).ToDS(cds.DigestType).ToCDS().String() {
+			keycds := key.(*dns.DNSKEY).ToDS(cds.DigestType).ToCDS()
+			keycds.Header().Ttl = cds.Header().Ttl
+			if cds.String() == keycds.String() {
 				found = true
 				log.Debugf("Found key alg %d keytag %d", key.(*dns.DNSKEY).Algorithm, key.(*dns.DNSKEY).KeyTag())
 				if key.(*dns.DNSKEY).Flags&dns.SEP != dns.SEP {
